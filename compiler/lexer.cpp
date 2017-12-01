@@ -123,7 +123,9 @@ void getSym()
 		nowchar = getchar();
 	}
 	
-	if (isLetter(nowchar))	//以字母开头，可能是标识符或保留字
+	if (nowchar == EOF)
+		symbol = EOFTK;
+	else if (isLetter(nowchar))	//以字母开头，可能是标识符或保留字
 	{
 		while (isLetter(nowchar) || isDigit(nowchar))
 		{

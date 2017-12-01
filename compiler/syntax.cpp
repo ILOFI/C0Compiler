@@ -2,7 +2,7 @@
 
 using namespace std;
 
-string lastToken, variden, funciden; //上一个标识符
+string lastToken, variden, funciden, leftiden; //上一个标识符
 bool syntaxDbg;
 extern char nowchar;
 symbolSet vartype, functype;
@@ -26,7 +26,7 @@ void nextSym()
     }
     else
     {
-        symbol = UNDEF;
+        symbol = EOFTK;
     }
 }
 
@@ -78,6 +78,7 @@ void program()                                                      //程序递�
         nextSym();
         if (funciden == "main")                                        //主函数
         {
+            if (functype != VOIDTK) serror();   //根据文法要求，主函数类型必为void
             mainFunc();
         }
         else
@@ -97,7 +98,7 @@ void constDec()                                                     //常量声�
     }
 }
 
-void constDef()
+void constDef()                                                     //常量定义
 {
     // int x = 3, y = +69; int x = -3; char x = 'v';
     consttype = symbol;
@@ -202,10 +203,15 @@ void funcDef()                                                      //函数定�
         nextSym();
     }
     if (symbol == LBRACETK) //左大括号，复合语句
+    {
+        nextSym();
         compound();
+        if (symbol != RBRACETK) serror();   //复合语句应以右大括号结尾
+        nextSym();
+    }
 }
 
-void paramList()
+void paramList()                                                    //参数列表
 {
     if (symbol != INTTK && symbol != CHARTK) serror();  //类型标识符
     vartype = symbol;
@@ -222,5 +228,120 @@ void paramList()
         if (symbol != IDENTK) serror();
         variden = token;
         nextSym();
+    }
+}
+
+void compound()                                                     //复合语句
+{
+    if (symbol == CONSTTK)  //常量声明
+    {
+        nextSym();
+        constDec();
+    }
+
+    while (symbol == INTTK || symbol == CHARTK)                     //变量声明
+    {
+        // int a, b; int b; int a[3];
+        vartype = symbol;                                           //记录当前的变量类型(int or char)
+        nextSym();                                                  //预读标识符
+        if (symbol != IDENTK) serror();                             //不是标识符，则报错
+        variden = token;                                          //保存标识符
+        nextSym();                                                  //再预读一个
+        if (symbol == COMMATK || symbol == SEMITK || symbol == LIPARTK)//逗号或分号或左中括号，变量声明
+        {
+            varDec();
+        }
+        else
+            serror();
+    }
+
+    statementList();    //语句列
+}
+
+void mainFunc()                                                     //主函数
+{
+    //此时已向前预读三个，读到左括号，根据文法要求，主函数main标识符后必有一对空的小括号
+    if (symbol != LPARTK) serror();
+    nextSym();
+    if (symbol != RPARTK) serror();
+    nextSym();
+    if (symbol == LBRACETK) //之后是左大括号
+    {
+        nextSym();
+        compound();
+        if (symbol != RBRACETK) serror();
+        nextSym();
+        if (symbol != EOFTK) serror();  //主函数后，程序结束
+    }
+    else serror();
+}
+
+void statementList()                                                //语句列
+{
+    while (symbol != RBRACETK)  //遇到右大括号，说明函数体结束了，返回
+    {
+        //否则就是语句列内的内容
+        statement();
+    }
+}
+
+void statement()                                                    //语句
+{
+    switch (symbol)
+    {
+        case(IFTK): 
+        {
+            nextSym();  //预读一个字符
+            ifState();
+            break;
+        }
+        case(WHILETK):
+        {
+            nextSym();
+            whileState();
+            break;
+        }
+        case(LBRACETK):
+        {
+            nextSym();
+            statementList();
+            break;
+        }
+        case(IDENTK):   //标识符，可能是函数调用或赋值语句
+        {
+            leftiden = token;
+            
+            break;
+        }
+        case(SCANFTK):
+        {
+            nextSym();
+            readState();
+            break;
+        }
+        case(PRINTFTK):
+        {
+            nextSym();
+            writeState();
+            break;
+        }
+        case(SEMITK):
+        {
+            //空语句
+            nextSym();
+            break;
+        }
+        case(CASETK):
+        {
+            nextSym();
+            caseState();
+            break;
+        }
+        case(RETURNTK):
+        {
+            nextSym();
+            returnState();
+            break;
+        }
     }
 }
