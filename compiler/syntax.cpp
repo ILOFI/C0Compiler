@@ -198,6 +198,8 @@ void funcDef()                                                      //函数定�
     {
         nextSym();          //向前预读一个
         paramList();
+        if (symbol != RPARTK) serror(); //参数列表应以小括号结尾
+        nextSym();
     }
     if (symbol == LBRACETK) //左大括号，复合语句
         compound();
@@ -205,5 +207,20 @@ void funcDef()                                                      //函数定�
 
 void paramList()
 {
-    
+    if (symbol != INTTK && symbol != CHARTK) serror();  //类型标识符
+    vartype = symbol;
+    nextSym();
+    if (symbol != IDENTK) serror();
+    variden = token;
+    nextSym();
+    while (symbol == COMMATK)
+    {
+        nextSym();
+        if (symbol != INTTK && symbol != CHARTK) serror();  //类型标识符
+        vartype = symbol;
+        nextSym();
+        if (symbol != IDENTK) serror();
+        variden = token;
+        nextSym();
+    }
 }
