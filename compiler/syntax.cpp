@@ -143,7 +143,7 @@ int numericDef()                                                    //读取整�
     int sign = 1, val = 0;                                          //符号
     if (symbol == PLUSTK)
         nextSym();
-    if (symbol == MINUSTK)
+    else if (symbol == MINUSTK)
     {
         sign = -1;
         nextSym();
@@ -309,20 +309,32 @@ void statement()                                                    //语句
         }
         case(IDENTK):   //标识符，可能是函数调用或赋值语句
         {
-            leftiden = token;
-            
+            leftiden = token;   //leftiden存放待赋值变量名或函数名
+            nextSym();
+            if (symbol == ASSTK || symbol == LIPARTK)   //赋值符号或左中括号（数组元素），赋值语句
+                assignState();
+            else if (symbol == LPARTK || symbol == SEMITK)  //左括号或分号（无参数），函数调用语句
+                funcCall();
+            else serror();
+            if (symbol != SEMITK)   //简单语句应以分号结尾
+                serror();
+            nextSym();  //预读下一个字符
             break;
         }
         case(SCANFTK):
         {
             nextSym();
             readState();
+            if (symbol != SEMITK) serror();
+            nextSym();
             break;
         }
         case(PRINTFTK):
         {
             nextSym();
             writeState();
+            if (symbol != SEMITK) serror();
+            nextSym();
             break;
         }
         case(SEMITK):
@@ -331,17 +343,267 @@ void statement()                                                    //语句
             nextSym();
             break;
         }
-        case(CASETK):
+        case(SWITCHTK):
         {
             nextSym();
-            caseState();
+            switchState();
             break;
         }
         case(RETURNTK):
         {
             nextSym();
             returnState();
+            if (symbol != SEMITK) serror();
+            nextSym();
             break;
         }
+    }
+}
+
+void ifState()
+{
+    if (symbol != LPARTK) serror(); //条件前应加括号
+    nextSym();
+    condition();
+    if (symbol != RPARTK) serror();
+    nextSym();
+    statement();
+    if (symbol == ELSETK)
+    {
+        nextSym();
+        statement();
+    }
+    nextSym();  //预读下一个单词
+}
+
+void condition()
+{
+    expr();
+    if (symbol == LESTK || symbol == LEQTK || symbol == GRETK || symbol == GEQTK || symbol == NEQTK || symbol == EQUTK) //关系运算符
+    {
+        nextSym();
+        expr();
+    }
+    nextSym();
+}
+
+void whileState()
+{
+    if (symbol != LPARTK) serror(); //条件前应加括号
+    nextSym();
+    condition();
+    if (symbol != RPARTK) serror();
+    nextSym();
+    statement();
+    nextSym();
+}
+
+void funcCall()
+{
+    //函数调用语句，此时已预读到左括号或分号，leftiden存放函数名
+    if (symbol == LPARTK)   //左括号后跟值参数表
+    {
+        nextSym();
+        paramVal();
+        if (symbol != RPARTK) serror(); //值参数表后接右括号
+        nextSym();
+    }
+    //否则为无参函数调用
+}
+
+void paramVal()
+{
+    expr(); //至少有一个表达式
+    while (symbol != RPARTK)
+    {
+        expr();
+        nextSym();
+    }
+}
+
+void assignState()
+{
+    //赋值语句，此时已预读到赋值符号或左中括号，leftiden存标识符
+    if (symbol == LIPARTK)  //左中括号，数组元素赋值
+    {
+        nextSym();
+        expr();
+        if (symbol != RIPARTK) serror();
+        nextSym();  //此时symbol应当为赋值符号
+    }
+    if (symbol != ASSTK) serror();
+    nextSym();
+    expr();
+}
+
+void readState()
+{
+    if (symbol != LPARTK) serror(); //标识符前应加左括号
+    nextSym();
+    if (symbol != IDENTK) serror(); //scanf语句至少有一个标识符
+    nextSym();
+    while (symbol == COMMATK)
+    {
+        nextSym();
+        if (symbol != IDENTK) serror();
+        nextSym();
+    }
+    if (symbol != RPARTK) serror();
+    nextSym();
+}
+
+void writeState()
+{
+    if (symbol != LPARTK) serror(); //printf后应加括号
+    nextSym();
+    if (symbol != STRINGV)  //情况3：括号内只有表达式
+    {
+        expr();
+        nextSym();
+    }
+    else
+    {
+        //情况1，2：字符串，表达式 / 字符串
+        nextSym();
+        if (symbol == COMMATK)
+        {
+            nextSym();
+            expr();
+        }
+    }
+    if (symbol != RPARTK) serror();
+    nextSym();    
+}
+
+void switchState()
+{
+    if (symbol != LPARTK) serror();
+    nextSym();
+    expr();
+    if (symbol != RPARTK) serror();
+    nextSym();
+    if (symbol != LBRACETK) serror();
+    nextSym();
+    if (symbol != CASETK) serror(); //情况表至少会有一个情况子语句
+    nextSym();
+    caseList(); //情况表
+    if (symbol == DEFAULTTK)
+    {
+        nextSym();
+        caseDefault();
+    }
+    if (symbol != RBRACETK) serror();
+    nextSym();
+}
+
+void caseList()
+{
+    caseSubState();
+    while (symbol == CASETK)
+    {
+        nextSym();
+        caseSubState();
+    }
+}
+
+void caseSubState()
+{
+    if (symbol == CHARV)
+        constcval = token[0];
+    else
+        constival = numericDef();
+    nextSym();
+    if (symbol != COLONTK) serror();    //常量后应接括号
+    nextSym();
+    statement();
+}
+
+void caseDefault()
+{
+    if (symbol != COLONTK) serror();
+    nextSym();
+    statement();
+}
+
+void returnState()
+{
+    if (symbol == LPARTK)   //return后接表达式
+    {
+        nextSym();
+        expr();
+        if (symbol != RPARTK) serror();
+        nextSym();
+    }
+    
+}
+
+void expr()
+{
+    if (symbol == PLUSTK || symbol == MINUSTK)
+    {
+        nextSym();
+    }
+    term();
+    while (symbol == PLUSTK || symbol == MINUSTK)
+    {
+        nextSym();
+        term();
+    }
+}
+
+void term()
+{
+    factor();
+    while (symbol == STARTK || symbol == DIVTK)
+    {
+        nextSym();
+        factor();
+    }
+}
+
+void factor()
+{
+    if (symbol == LPARTK)
+    {
+        nextSym();
+        expr();
+        if (symbol != RPARTK) serror();
+        nextSym();
+    }
+    else if (symbol == CHARV)
+    {
+        constcval = token[0];
+        nextSym();
+    }
+    else if (symbol == PLUSTK || symbol == MINUSTK || symbol == NDIGV || symbol == DIGV || symbol == UINTV)
+    {
+        constival = numericDef();
+        nextSym();
+    }
+    else
+    {
+        //标识符，标识符[表达式]，有返回值的函数调用(有参，无参)
+        if (symbol != IDENTK) serror();
+        leftiden = token;
+        nextSym();
+        if (symbol == LIPARTK)
+        {
+            nextSym();
+            expr();
+            if (symbol != RIPARTK) serror();
+            nextSym();
+        }
+        else if (symbol == LPARTK)
+        {
+            nextSym();
+            funcCall();
+        }
+        else
+        {
+            //标识符或有返回值函数调用(无参)
+            
+            nextSym();
+        }
+
     }
 }

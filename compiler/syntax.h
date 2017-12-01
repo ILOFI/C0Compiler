@@ -56,9 +56,7 @@ void readState();
 
 void writeState();
 
-void empState();
-
-void caseState();
+void switchState();
 
 void returnState();
 
