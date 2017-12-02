@@ -13,7 +13,7 @@ char constcval;
 
 void serror()
 {
-    cout << "Error!" << endl;
+    printf("Error on line %d!.\n", lineNum);
 }
 
 void nextSym()
@@ -86,6 +86,9 @@ void program()                                                      //程序递�
             funcDef();
         }
     }
+
+    if (syntaxDbg)
+        printf("Line %d: This is a program.\n", lineNum);
 }
 
 void constDec()                                                     //常量声明
@@ -136,6 +139,8 @@ void constDef()                                                     //常量定�
     }
     if (symbol != SEMITK) serror();
     nextSym();
+    if (syntaxDbg)
+        printf("Line %d: This is a constant definition statement.\n", lineNum);
 }
 
 int numericDef()                                                    //读取整数
@@ -159,6 +164,8 @@ void varDec()                                                       //变量声�
     varDef();
     if (symbol != SEMITK) serror();
     nextSym();
+    if (syntaxDbg)
+        printf("Line %d: This is a variable definition statement.\n", lineNum);
 }
 
 void varDef()                                                       //变量定义
@@ -208,7 +215,10 @@ void funcDef()                                                      //函数定�
         compound();
         if (symbol != RBRACETK) serror();   //复合语句应以右大括号结尾
         nextSym();
+        if (syntaxDbg)
+            printf("Line %d: This is a function definition statement.\n", lineNum);
     }
+    else serror();  //无左大括号，不符合文法要求
 }
 
 void paramList()                                                    //参数列表
@@ -272,6 +282,8 @@ void mainFunc()                                                     //主函数
         if (symbol != RBRACETK) serror();
         nextSym();
         if (symbol != EOFTK) serror();  //主函数后，程序结束
+        if (syntaxDbg)
+            printf("Line %d: This is a main function.\n", lineNum);
     }
     else serror();
 }
@@ -283,6 +295,7 @@ void statementList()                                                //语句列
         //否则就是语句列内的内容
         statement();
     }
+    
 }
 
 void statement()                                                    //语句
@@ -305,6 +318,8 @@ void statement()                                                    //语句
         {
             nextSym();
             statementList();
+            if (symbol != RBRACETK) serror();
+            nextSym();
             break;
         }
         case(IDENTK):   //标识符，可能是函数调用或赋值语句
@@ -357,6 +372,7 @@ void statement()                                                    //语句
             nextSym();
             break;
         }
+		default: serror();
     }
 }
 
@@ -373,7 +389,8 @@ void ifState()
         nextSym();
         statement();
     }
-    nextSym();  //预读下一个单词
+    //nextSym();  //预读下一个单词
+    if (syntaxDbg) printf("Line %d: This is a IF statement.\n", lineNum);
 }
 
 void condition()
@@ -384,7 +401,7 @@ void condition()
         nextSym();
         expr();
     }
-    nextSym();
+    //nextSym();
 }
 
 void whileState()
@@ -395,7 +412,8 @@ void whileState()
     if (symbol != RPARTK) serror();
     nextSym();
     statement();
-    nextSym();
+    //nextSym();
+    if (syntaxDbg) printf("Line %d: This is a WHILE statement.\n", lineNum);
 }
 
 void funcCall()
@@ -409,6 +427,7 @@ void funcCall()
         nextSym();
     }
     //否则为无参函数调用
+    if (syntaxDbg) printf("Line %d: This is a function call statement.\n", lineNum);
 }
 
 void paramVal()
@@ -416,8 +435,9 @@ void paramVal()
     expr(); //至少有一个表达式
     while (symbol != RPARTK)
     {
-        expr();
+		if (symbol != COMMATK) serror();
         nextSym();
+        expr();
     }
 }
 
@@ -434,6 +454,7 @@ void assignState()
     if (symbol != ASSTK) serror();
     nextSym();
     expr();
+    if (syntaxDbg) printf("Line %d: This is a assign statement.\n", lineNum);
 }
 
 void readState()
@@ -450,6 +471,7 @@ void readState()
     }
     if (symbol != RPARTK) serror();
     nextSym();
+    if (syntaxDbg) printf("Line %d: This is a read statement.\n", lineNum);
 }
 
 void writeState()
@@ -459,7 +481,7 @@ void writeState()
     if (symbol != STRINGV)  //情况3：括号内只有表达式
     {
         expr();
-        nextSym();
+        //nextSym();
     }
     else
     {
@@ -473,6 +495,7 @@ void writeState()
     }
     if (symbol != RPARTK) serror();
     nextSym();    
+    if (syntaxDbg) printf("Line %d: This is a write statement.\n", lineNum);
 }
 
 void switchState()
@@ -494,6 +517,7 @@ void switchState()
     }
     if (symbol != RBRACETK) serror();
     nextSym();
+    if (syntaxDbg) printf("Line %d: This is a SWITCH statement.\n", lineNum);
 }
 
 void caseList()
@@ -516,6 +540,7 @@ void caseSubState()
     if (symbol != COLONTK) serror();    //常量后应接括号
     nextSym();
     statement();
+    if (syntaxDbg) printf("Line %d: This is a case-sub statement.\n", lineNum);
 }
 
 void caseDefault()
@@ -523,6 +548,7 @@ void caseDefault()
     if (symbol != COLONTK) serror();
     nextSym();
     statement();
+    if (syntaxDbg) printf("Line %d: This is a case-default statement.\n", lineNum);
 }
 
 void returnState()
@@ -534,6 +560,7 @@ void returnState()
         if (symbol != RPARTK) serror();
         nextSym();
     }
+    if (syntaxDbg) printf("Line %d: This is a return statement.\n", lineNum);
     
 }
 
@@ -595,14 +622,14 @@ void factor()
         }
         else if (symbol == LPARTK)
         {
-            nextSym();
+            //nextSym();
             funcCall();
         }
         else
         {
             //标识符或有返回值函数调用(无参)
             
-            nextSym();
+            //nextSym();
         }
 
     }

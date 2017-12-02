@@ -41,3 +41,6 @@ Debug/compiler.exe
 Debug/compiler.ilk
 Debug/compiler.pdb
 ipch/compiler-cdccb807/compiler-5e2db7a7.ipch
+Debug/compiler.exe.manifest
+compiler.opensdf
+Debug/*

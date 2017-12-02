@@ -14,12 +14,11 @@ using namespace std;
 int _tmain(int argc, _TCHAR* argv[])
 {
 	string inpath;
-	char t = 't';
-	cout << "Lexical Analysis Program" << endl << "Input File Path: ";
+	cout << "Syntax Analysis Program" << endl << "Input File Path: ";
 	cin >> inpath;
 	cout << "Input File is: " << inpath << endl;
 	freopen(inpath.c_str(), "r", stdin);
-	lexical();
+	syntax();
 	fclose(stdin);
 	return 0;
 }

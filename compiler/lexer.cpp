@@ -272,7 +272,6 @@ void lexical()
 int main()
 {
 	string inpath;
-	char t = 't';
 	cout << "Lexical Analysis Program" << endl << "Input File Path: ";
 	cin >> inpath;
 	cout << "Input File is: " << inpath << endl;
