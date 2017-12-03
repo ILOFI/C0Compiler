@@ -20,6 +20,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	freopen(inpath.c_str(), "r", stdin);
 	syntax();
 	fclose(stdin);
+	cout << "Syntax Analysis Finished!" << endl;
 	return 0;
 }
 

@@ -355,6 +355,7 @@ void statement()                                                    //语句
         case(SEMITK):
         {
             //空语句
+			if (syntaxDbg) printf("Line %d: This is an empty statement.\n", lineNum);
             nextSym();
             break;
         }
