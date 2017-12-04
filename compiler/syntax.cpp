@@ -2,15 +2,6 @@
 
 using namespace std;
 
-string lastToken, variden, funciden, leftiden; //上一个标识符
-bool syntaxDbg;
-extern char nowchar;
-symbolSet vartype, functype;
-int arrlen;
-symbolSet consttype;
-int constival;
-char constcval;
-
 void serror()
 {
     printf("Error on line %d!.\n", lineNum);
@@ -35,7 +26,8 @@ void syntax()
     cnt = 0;                                                        //单词计数
     lineNum = 1;                                                    //行号计数
     nextSym();                                                      //预读一个单词
-    syntaxDbg = true;
+    syntaxDbg = true;                                               //打印语法成分信息
+    deepDbg = true;                                                 //打印更详细的信息
     program();                                                      //程序递归子程序
 }
 
@@ -108,32 +100,38 @@ void constDef()                                                     //常量定�
     if (symbol != INTTK && symbol != CHARTK) serror();              //常量类型错误
     nextSym();
     if (symbol != IDENTK) serror();                                 //类型后应接标识符
+    constiden = token;
     nextSym();
     if (symbol != ASSTK) serror();                                  //标识符后接等号
     nextSym();
     if (consttype == INTTK)                                         //整型常量
     {
         constival = numericDef();
+		if (deepDbg) printf("CONST INT %s = %d\n", constiden.c_str(), constival);
     }
     else
     {
         constcval = token[0];
+		if (deepDbg) printf("CONST CHAR %s = '%c'\n", constiden.c_str(), constcval);
     }
     nextSym();
     while (symbol == COMMATK)
     {
         nextSym();
         if (symbol != IDENTK) serror();                                 //类型后应接标识符
+		constiden = token;
         nextSym();
         if (symbol != ASSTK) serror();                                  //标识符后接等号
         nextSym();
         if (consttype == INTTK)                                         //整型常量
         {
             constival = numericDef();
+			if (deepDbg) printf("CONST INT %s = %d\n", constiden.c_str(), constival);
         }
         else
         {
             constcval = token[0];
+			if (deepDbg) printf("CONST CHAR %s = '%c'\n", constiden.c_str(), constcval);
         }
         nextSym();
     }
@@ -177,9 +175,17 @@ void varDef()                                                       //变量定�
         nextSym();
         if (symbol != NDIGV && symbol != UINTV) serror();   //数组长度为无符号整数
         arrlen = num;
+
+		if (deepDbg) printf("VAR %s ARRAY %s LEN = %d\n", symbol_type_to_str(vartype), variden.c_str(), arrlen);
+
         nextSym();
         if (symbol != RIPARTK) serror(); //声明后应该为右中括号，否则报错
         nextSym();
+    }
+    else
+    {
+        //非数组类型变量
+		if (deepDbg) printf("VAR %s %s\n", symbol_type_to_str(vartype), variden.c_str());
     }
     while (symbol == COMMATK) //逗号，说明还有变量声明
     {
@@ -192,9 +198,17 @@ void varDef()                                                       //变量定�
             nextSym();
             if (symbol != NDIGV && symbol != UINTV) serror();   //数组长度为无符号整数
             arrlen = num;
+
+			if (deepDbg) printf("VAR %s ARRAY %s LEN = %d\n", symbol_type_to_str(vartype), variden.c_str(), arrlen);
+
             nextSym();
             if (symbol != RIPARTK) serror(); //声明后应该为右中括号，否则报错
             nextSym();
+        }
+        else
+        {
+            //非数组类型变量
+			if (deepDbg) printf("VAR %s %s\n", symbol_type_to_str(vartype), variden.c_str());
         }
     }
 }
@@ -202,6 +216,7 @@ void varDef()                                                       //变量定�
 void funcDef()                                                      //函数定义
 {
     //此时已向前预读三个，读到左括号或左大括号
+	if (deepDbg) printf("FUNCTION DEFINATION NAME: %s, RETURN TYPE: %s\n", funciden.c_str(), symbol_type_to_str(functype));
     if (symbol == LPARTK)   //左括号，有参数
     {
         nextSym();          //向前预读一个
@@ -229,6 +244,7 @@ void paramList()                                                    //参数列�
     if (symbol != IDENTK) serror();
     variden = token;
     nextSym();
+	if (deepDbg) printf("PARAMETER %s %s\n", symbol_type_to_str(vartype), variden.c_str());
     while (symbol == COMMATK)
     {
         nextSym();
@@ -238,6 +254,7 @@ void paramList()                                                    //参数列�
         if (symbol != IDENTK) serror();
         variden = token;
         nextSym();
+		if (deepDbg) printf("PARAMETER %s %s\n", symbol_type_to_str(vartype), variden.c_str());
     }
 }
 
@@ -275,6 +292,7 @@ void mainFunc()                                                     //主函数
     nextSym();
     if (symbol != RPARTK) serror();
     nextSym();
+	if (deepDbg) printf("MAIN FUNCTION\n");
     if (symbol == LBRACETK) //之后是左大括号
     {
         nextSym();

@@ -20,3 +20,4 @@
 #include <set>
 #include "lexer.h"
 #include "syntax.h"
+#include "symtable.h"

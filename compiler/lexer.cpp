@@ -10,7 +10,7 @@
 
 using namespace std;
 
-static inline const char *symbol_type_to_str(enum symbolSet type)
+char *symbol_type_to_str(enum symbolSet type)
 {
 	switch(type)
 	{
@@ -57,6 +57,7 @@ static inline const char *symbol_type_to_str(enum symbolSet type)
 		SYMBOL_CASE(QTETK);
 		SYMBOL_CASE(DBQTK);
 		SYMBOL_CASE(UNDEF);
+		SYMBOL_CASE(EOFTK);
 	}
 	return "???";
 }

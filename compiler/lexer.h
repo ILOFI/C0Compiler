@@ -1,5 +1,8 @@
 using namespace std;
 
+#ifndef _LEXER_H
+#define _LEXER_H
+
 enum symbolSet {LBRACETK = 1, RBRACETK, IFTK, ELSETK, WHILETK, SWITCHTK, CASETK, 
 				DEFAULTTK, SCANFTK, PRINTFTK, INTTK, CHARTK, CONSTTK, VOIDTK, 
 				MAINTK, RETURNTK, IDENTK, CHARV, STRINGV, NDIGV, DIGV, UINTV,
@@ -52,3 +55,6 @@ extern bool errflag;
 
 void lexical();
 void getSym();
+char *symbol_type_to_str(enum symbolSet type);
+
+#endif

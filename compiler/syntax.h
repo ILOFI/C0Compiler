@@ -1,12 +1,25 @@
 using namespace std;
 
+#ifndef _SYNTAX_H
+#define _SYNTAX_H
+
 extern symbolSet symbol;
 extern char nowchar;
 extern string token;
 extern int num, cnt, lineNum;
 extern bool errflag;
 
+extern string lastToken, variden, constiden, funciden, leftiden; //上一个标识符
+extern bool syntaxDbg, deepDbg;
+extern symbolSet vartype, functype;
+extern int arrlen;
+extern symbolSet consttype;
+extern int constival;
+extern char constcval;
+
 extern void getSym();
+
+extern char *symbol_type_to_str(enum symbolSet type);
 
 void nextSym();
 
@@ -69,3 +82,5 @@ void caseSubState();
 void caseDefault();
 
 void paramVal();
+
+#endif
