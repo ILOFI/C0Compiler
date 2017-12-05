@@ -4,11 +4,11 @@
 #include <string>
 using namespace std;
 
-#define TABSIZE 1024
-#define MAXLEV 512
+#define TABSIZE 512
+#define MAXLEV 256
 
-enum symkind {VARKD, CONSTKD, PROCKD, FUNCKD};
-enum symtype {INTTP, CHARTP};
+enum symkind {VARKD, CONSTKD, FUNCKD, PARAKD};
+enum symtype {INTTP, CHARTP, VOIDTP};
 
 typedef struct
 {                   //符号表表项
@@ -24,14 +24,24 @@ typedef struct
 {                       //符号表
     symTabItem item[TABSIZE];
     int curpnt;         //符号表当前位置指针
-    int totLevel;       //分程序总数
-    int levpnt[MAXLEV]; //分程序索引表
+    int totSub;       //分程序总数
+    int subpnt[MAXLEV]; //分程序索引表
 } symTable;
 
 extern symTable symbolTable;
 
+symtype symbol_to_symtype(symbolSet x);
+char * symkind_to_str(symkind x);
+char * symtype_to_str(symtype x);
+
+void initTable();
+
 int insertTable(string name, symkind kind, symtype type, int value, int address, int len);
 
-int searchTable(string name);
+void updatePara(int para);
+
+int searchTable(string name, bool findfunc);
+
+void printSymTable();
 
 #endif

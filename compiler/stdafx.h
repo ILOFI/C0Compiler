@@ -21,3 +21,5 @@
 #include "lexer.h"
 #include "syntax.h"
 #include "symtable.h"
+#include "errhandler.h"
+

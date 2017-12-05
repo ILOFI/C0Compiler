@@ -2,9 +2,13 @@
 
 using namespace std;
 
-void serror()
+int address;
+int para;
+int place;
+
+void serror(string msg = ".")
 {
-    printf("Error on line %d!.\n", lineNum);
+    printf("Error on line %d: %s\n", lineNum, msg.c_str());
 }
 
 void nextSym()
@@ -29,10 +33,12 @@ void syntax()
     syntaxDbg = true;                                               //打印语法成分信息
     deepDbg = true;                                                 //打印更详细的信息
     program();                                                      //程序递归子程序
+    printSymTable();                                                //打印符号表信息
 }
 
 void program()                                                      //程序递归子程序
 {
+    address = 0;
     if (symbol == CONSTTK)                                          //常量标识，调用常量声明子程序
     {
         nextSym();
@@ -108,11 +114,13 @@ void constDef()                                                     //常量定�
     {
         constival = numericDef();
 		if (deepDbg) printf("CONST INT %s = %d\n", constiden.c_str(), constival);
+        insertTable(constiden, CONSTKD, INTTP, constival, address++, 0);
     }
     else
     {
         constcval = token[0];
 		if (deepDbg) printf("CONST CHAR %s = '%c'\n", constiden.c_str(), constcval);
+        insertTable(constiden, CONSTKD, CHARTP, (int)constcval, address++, 0);
     }
     nextSym();
     while (symbol == COMMATK)
@@ -127,11 +135,13 @@ void constDef()                                                     //常量定�
         {
             constival = numericDef();
 			if (deepDbg) printf("CONST INT %s = %d\n", constiden.c_str(), constival);
+            insertTable(constiden, CONSTKD, INTTP, constival, address++, 0);
         }
         else
         {
             constcval = token[0];
 			if (deepDbg) printf("CONST CHAR %s = '%c'\n", constiden.c_str(), constcval);
+            insertTable(constiden, CONSTKD, CHARTP, (int)constcval, address++, 0);
         }
         nextSym();
     }
@@ -170,6 +180,7 @@ void varDef()                                                       //变量定�
 {
     //此时已预读到第三个符号，symbol可能是逗号、分号或左中括号
     //variden存放变量名，vartype存放类型
+    symtype vartp = symbol_to_symtype(vartype);
     if (symbol == LIPARTK)
     {
         nextSym();
@@ -177,6 +188,9 @@ void varDef()                                                       //变量定�
         arrlen = num;
 
 		if (deepDbg) printf("VAR %s ARRAY %s LEN = %d\n", symbol_type_to_str(vartype), variden.c_str(), arrlen);
+        
+        insertTable(variden, VARKD, vartp, 0, address, arrlen);
+        address += arrlen;
 
         nextSym();
         if (symbol != RIPARTK) serror(); //声明后应该为右中括号，否则报错
@@ -186,6 +200,7 @@ void varDef()                                                       //变量定�
     {
         //非数组类型变量
 		if (deepDbg) printf("VAR %s %s\n", symbol_type_to_str(vartype), variden.c_str());
+        insertTable(variden, VARKD, vartp, 0, address++, 0);
     }
     while (symbol == COMMATK) //逗号，说明还有变量声明
     {
@@ -201,6 +216,9 @@ void varDef()                                                       //变量定�
 
 			if (deepDbg) printf("VAR %s ARRAY %s LEN = %d\n", symbol_type_to_str(vartype), variden.c_str(), arrlen);
 
+            insertTable(variden, VARKD, vartp, 0, address, arrlen);
+            address += arrlen;
+
             nextSym();
             if (symbol != RIPARTK) serror(); //声明后应该为右中括号，否则报错
             nextSym();
@@ -209,6 +227,7 @@ void varDef()                                                       //变量定�
         {
             //非数组类型变量
 			if (deepDbg) printf("VAR %s %s\n", symbol_type_to_str(vartype), variden.c_str());
+            insertTable(variden, VARKD, vartp, 0, address++, 0);
         }
     }
 }
@@ -216,7 +235,13 @@ void varDef()                                                       //变量定�
 void funcDef()                                                      //函数定义
 {
     //此时已向前预读三个，读到左括号或左大括号
+    symtype funcret = symbol_to_symtype(functype);
+    address = 0;
+    para = 0;       //重置地址和参数个数变量
+
 	if (deepDbg) printf("FUNCTION DEFINATION NAME: %s, RETURN TYPE: %s\n", funciden.c_str(), symbol_type_to_str(functype));
+    insertTable(funciden, FUNCKD, funcret, 0, address++, para);
+    
     if (symbol == LPARTK)   //左括号，有参数
     {
         nextSym();          //向前预读一个
@@ -245,6 +270,8 @@ void paramList()                                                    //参数列�
     variden = token;
     nextSym();
 	if (deepDbg) printf("PARAMETER %s %s\n", symbol_type_to_str(vartype), variden.c_str());
+    insertTable(variden, PARAKD, symbol_to_symtype(vartype), 0, address++, 0);
+    para++;
     while (symbol == COMMATK)
     {
         nextSym();
@@ -255,7 +282,10 @@ void paramList()                                                    //参数列�
         variden = token;
         nextSym();
 		if (deepDbg) printf("PARAMETER %s %s\n", symbol_type_to_str(vartype), variden.c_str());
+        insertTable(variden, PARAKD, symbol_to_symtype(vartype), 0, address++, 0);
+        para++;
     }
+    updatePara(para);
 }
 
 void compound()                                                     //复合语句
@@ -288,11 +318,14 @@ void compound()                                                     //复合语�
 void mainFunc()                                                     //主函数
 {
     //此时已向前预读三个，读到左括号，根据文法要求，主函数main标识符后必有一对空的小括号
+    address = 0;
+    para = 0;
     if (symbol != LPARTK) serror();
     nextSym();
     if (symbol != RPARTK) serror();
     nextSym();
 	if (deepDbg) printf("MAIN FUNCTION\n");
+    insertTable(funciden, FUNCKD, VOIDTP, 0, address++, 0);
     if (symbol == LBRACETK) //之后是左大括号
     {
         nextSym();
@@ -438,6 +471,11 @@ void whileState()
 void funcCall()
 {
     //函数调用语句，此时已预读到左括号或分号，leftiden存放函数名
+    int funcplace = searchTable(leftiden, true);
+    if (funcplace == -1) serror();  //未定义的函数
+
+    para = 0;   //参数数目
+
     if (symbol == LPARTK)   //左括号后跟值参数表
     {
         nextSym();
@@ -446,25 +484,35 @@ void funcCall()
         nextSym();
     }
     //否则为无参函数调用
+
+    if (para != symbolTable.item[funcplace].len) serror();  //传参个数与函数声明中的参数个数不同，报错
     if (syntaxDbg) printf("Line %d: This is a function call statement.\n", lineNum);
 }
 
 void paramVal()
 {
     expr(); //至少有一个表达式
+    para++;
     while (symbol != RPARTK)
     {
 		if (symbol != COMMATK) serror();
         nextSym();
         expr();
+        para++;
     }
 }
 
 void assignState()
 {
     //赋值语句，此时已预读到赋值符号或左中括号，leftiden存标识符
+
+    int varplace = searchTable(leftiden, false);
+    if (varplace == -1) serror();   //未定义的标识符
+    else if (symbolTable.item[varplace].type == CONSTKD) serror();  //不允许向常数赋值
+
     if (symbol == LIPARTK)  //左中括号，数组元素赋值
     {
+        if (symbolTable.item[varplace].len == 0) serror();  //标识符对应符号不是数组
         nextSym();
         expr();
         if (symbol != RIPARTK) serror();
@@ -481,11 +529,25 @@ void readState()
     if (symbol != LPARTK) serror(); //标识符前应加左括号
     nextSym();
     if (symbol != IDENTK) serror(); //scanf语句至少有一个标识符
+    leftiden = token;   //此时leftiden存放标识符
+
+    place = searchTable(leftiden, false);
+    if (place == -1) serror();  //未定义的变量
+    else if (symbolTable.item[place].kind == CONSTKD) serror(); //向常量赋值，不允许
+    else if (symbolTable.item[place].len > 0) serror(); //本文法读语句不支持数组读取
+
     nextSym();
     while (symbol == COMMATK)
     {
         nextSym();
         if (symbol != IDENTK) serror();
+        leftiden = token;   //此时leftiden存放标识符
+
+        place = searchTable(leftiden, false);
+        if (place == -1) serror();  //未定义的变量
+        else if (symbolTable.item[place].kind == CONSTKD) serror(); //向常量赋值，不允许
+        else if (symbolTable.item[place].len > 0) serror(); //本文法读语句不支持数组读取
+
         nextSym();
     }
     if (symbol != RPARTK) serror();
@@ -632,8 +694,14 @@ void factor()
         if (symbol != IDENTK) serror();
         leftiden = token;
         nextSym();
+        //查符号表
+        place = searchTable(leftiden, false);
         if (symbol == LIPARTK)
         {
+            //数组，只可能是变量
+            if (place == -1 || (place != -1 && (symbolTable.item[place].len) == 0)) serror();
+            else 
+                if (symbolTable.item[place].kind == CONSTKD) serror();
             nextSym();
             expr();
             if (symbol != RIPARTK) serror();
@@ -641,14 +709,24 @@ void factor()
         }
         else if (symbol == LPARTK)
         {
+            //有返回值函数调用(有参)，当前符号：左括号
             //nextSym();
             funcCall();
         }
         else
         {
-            //标识符或有返回值函数调用(无参)
-            
+            //标识符或有返回值函数调用(无参)，当前符号：其他(可能是分号)
             //nextSym();
+            //首先检查是否为函数
+            if ((place = searchTable(leftiden, true)) != -1)
+                funcCall();
+            else 
+            {   //不是函数，是变量或常量
+                place = searchTable(leftiden, false);
+
+                if (place == -1) serror();  //都不是，报错
+                else if (symbolTable.item[place].len > 0) serror(); //此处不应出现数组
+            }
         }
 
     }
