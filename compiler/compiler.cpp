@@ -19,6 +19,12 @@ char constcval;
 
 symTable symbolTable;
 
+ofstream midcodeout;
+int codeCnt;        //中间代码条数指针
+int labelCnt;       //标签数指针
+int tvarCnt;        //临时变量个数
+bool midcodeDbg;
+
 using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])

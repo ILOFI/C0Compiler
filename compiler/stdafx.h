@@ -22,4 +22,4 @@
 #include "syntax.h"
 #include "symtable.h"
 #include "errhandler.h"
-
+#include "quaternion.h"

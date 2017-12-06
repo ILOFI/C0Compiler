@@ -32,6 +32,9 @@ void syntax()
     nextSym();                                                      //预读一个单词
     syntaxDbg = false;                                               //打印语法成分信息
     deepDbg = false;                                                 //打印更详细的信息
+    midcodeDbg = true;                                              //打印四元式信息
+    initTable();
+    initQuaternion();
     program();                                                      //程序递归子程序
     printSymTable();                                                //打印符号表信息
 }
@@ -117,12 +120,16 @@ void constDef()                                                     //常量定�
         constival = numericDef();
 		if (deepDbg) printf("CONST INT %s = %d\n", constiden.c_str(), constival);
         insertTable(constiden, CONSTKD, INTTP, constival, address++, 0);
+
+        genQuaternion(CONSTOP, oprstr[(int)INTOP], constival, constiden);
     }
     else
     {
         constcval = token[0];
 		if (deepDbg) printf("CONST CHAR %s = '%c'\n", constiden.c_str(), constcval);
         insertTable(constiden, CONSTKD, CHARTP, (int)constcval, address++, 0);
+
+        genQuaternion(CONSTOP, oprstr[(int)CHAROP], (int)constcval, constiden);
     }
     nextSym();
     while (symbol == COMMATK)
@@ -138,12 +145,16 @@ void constDef()                                                     //常量定�
             constival = numericDef();
 			if (deepDbg) printf("CONST INT %s = %d\n", constiden.c_str(), constival);
             insertTable(constiden, CONSTKD, INTTP, constival, address++, 0);
+
+            genQuaternion(CONSTOP, oprstr[(int)INTOP], constival, constiden);
         }
         else
         {
             constcval = token[0];
 			if (deepDbg) printf("CONST CHAR %s = '%c'\n", constiden.c_str(), constcval);
             insertTable(constiden, CONSTKD, CHARTP, (int)constcval, address++, 0);
+
+            genQuaternion(CONSTOP, oprstr[(int)CHAROP], (int)constcval, constiden);
         }
         nextSym();
     }
@@ -194,6 +205,8 @@ void varDef()                                                       //变量定�
         insertTable(variden, VARKD, vartp, 0, address, arrlen);
         address += arrlen;
 
+        genQuaternion(VAROP, oprstr[(int)vartp+2], arrlen, variden);
+
         nextSym();
         if (symbol != RIPARTK) serror(); //声明后应该为右中括号，否则报错
         nextSym();
@@ -203,6 +216,8 @@ void varDef()                                                       //变量定�
         //非数组类型变量
 		if (deepDbg) printf("VAR %s %s\n", symbol_type_to_str(vartype), variden.c_str());
         insertTable(variden, VARKD, vartp, 0, address++, 0);
+
+        genQuaternion(VAROP, oprstr[(int)vartp+2], oprstr[(int)SPACEOP], variden);
     }
     while (symbol == COMMATK) //逗号，说明还有变量声明
     {
@@ -221,6 +236,8 @@ void varDef()                                                       //变量定�
             insertTable(variden, VARKD, vartp, 0, address, arrlen);
             address += arrlen;
 
+            genQuaternion(VAROP, oprstr[(int)vartp+2], arrlen, variden);
+
             nextSym();
             if (symbol != RIPARTK) serror(); //声明后应该为右中括号，否则报错
             nextSym();
@@ -230,6 +247,8 @@ void varDef()                                                       //变量定�
             //非数组类型变量
 			if (deepDbg) printf("VAR %s %s\n", symbol_type_to_str(vartype), variden.c_str());
             insertTable(variden, VARKD, vartp, 0, address++, 0);
+
+            genQuaternion(VAROP, oprstr[(int)vartp+2], oprstr[(int)SPACEOP], variden);
         }
     }
 }
@@ -243,6 +262,8 @@ void funcDef()                                                      //函数定�
 
 	if (deepDbg) printf("FUNCTION DEFINATION NAME: %s, RETURN TYPE: %s\n", funciden.c_str(), symbol_type_to_str(functype));
     insertTable(funciden, FUNCKD, funcret, 0, address++, para);
+
+    genQuaternion(FUNCOP, oprstr[(int)funcret+2], oprstr[(int)SPACEOP], funciden);
     
     if (symbol == LPARTK)   //左括号，有参数
     {
@@ -261,6 +282,10 @@ void funcDef()                                                      //函数定�
             printf("Line %d: This is a function definition statement.\n", lineNum);
     }
     else serror();  //无左大括号，不符合文法要求
+    //注意：此时ret指令默认在return语句中生成，而无返回值函数可能没有return语句?
+    //可以在添加endop前检查当前指令是否为return，若不是，手动添加
+    checkReturnCode();
+    genQuaternion(ENDOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
 }
 
 void paramList()                                                    //参数列表
@@ -274,6 +299,9 @@ void paramList()                                                    //参数列�
 	if (deepDbg) printf("PARAMETER %s %s\n", symbol_type_to_str(vartype), variden.c_str());
     insertTable(variden, PARAKD, symbol_to_symtype(vartype), 0, address++, 0);
     para++;
+    
+    genQuaternion(PARAOP, oprstr[(int)(symbol_to_symtype(vartype))+2], oprstr[(int)SPACEOP], variden);
+
     while (symbol == COMMATK)
     {
         nextSym();
@@ -286,6 +314,8 @@ void paramList()                                                    //参数列�
 		if (deepDbg) printf("PARAMETER %s %s\n", symbol_type_to_str(vartype), variden.c_str());
         insertTable(variden, PARAKD, symbol_to_symtype(vartype), 0, address++, 0);
         para++;
+
+        genQuaternion(PARAOP, oprstr[(int)(symbol_to_symtype(vartype))+2], oprstr[(int)SPACEOP], variden);
     }
     updatePara(para);
 }
@@ -328,6 +358,8 @@ void mainFunc()                                                     //主函数
     nextSym();
 	if (deepDbg) printf("MAIN FUNCTION\n");
     insertTable(funciden, FUNCKD, VOIDTP, 0, address++, 0);
+
+    genQuaternion(FUNCOP, oprstr[(int)VOIDOP], oprstr[(int)SPACEOP], funciden);
     if (symbol == LBRACETK) //之后是左大括号
     {
         nextSym();
@@ -339,6 +371,8 @@ void mainFunc()                                                     //主函数
             printf("Line %d: This is a main function.\n", lineNum);
     }
     else serror();
+
+    genQuaternion(ENDOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
 }
 
 void statementList()                                                //语句列
@@ -432,17 +466,29 @@ void statement()                                                    //语句
 
 void ifState()
 {
+    string label1 = genNewLab();     //指向else的标签
+    string label2 = genNewLab();     //指向下一条语句的标签
+
     if (symbol != LPARTK) serror(); //条件前应加括号
     nextSym();
     condition();
+
+    genQuaternion(JNEOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], label1);
+
     if (symbol != RPARTK) serror();
     nextSym();
     statement();
+
+    genQuaternion(JMPOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], label2);
+    genQuaternion(LABOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], label1);
+
     if (symbol == ELSETK)
     {
         nextSym();
         statement();
     }
+
+    genQuaternion(LABOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], label2);
     //nextSym();  //预读下一个单词
     if (syntaxDbg) printf("Line %d: This is a IF statement.\n", lineNum);
 }
@@ -460,12 +506,23 @@ void condition()
 
 void whileState()
 {
+    string label1 = genNewLab();    //条件计算前的标签
+    string label2 = genNewLab();    //指向下一条语句的标签
+
+    genQuaternion(LABOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], label1);
+
     if (symbol != LPARTK) serror(); //条件前应加括号
     nextSym();
     condition();
+    
+    genQuaternion(JNEOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], label2);
+
     if (symbol != RPARTK) serror();
     nextSym();
     statement();
+    
+    genQuaternion(JMPOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], label1);
+    genQuaternion(LABOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], label2);
     //nextSym();
     if (syntaxDbg) printf("Line %d: This is a WHILE statement.\n", lineNum);
 }
@@ -477,6 +534,7 @@ void funcCall()
     if (funcplace == -1) serror("Undefined function "+leftiden);  //未定义的函数
 
     int para = 0;   //参数数目
+    string funcname = leftiden;
 
     if (symbol == LPARTK)   //左括号后跟值参数表
     {
@@ -486,6 +544,8 @@ void funcCall()
         nextSym();
     }
     //否则为无参函数调用
+
+    genQuaternion(CALLOP, funcname, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
 
     if (para != symbolTable.item[funcplace].len) serror("Function "+leftiden+" parameter counts not match");  //传参个数与函数声明中的参数个数不同，报错
     if (syntaxDbg) printf("Line %d: This is a function call statement.\n", lineNum);

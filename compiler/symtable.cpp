@@ -39,7 +39,7 @@ char * symtype_to_str(symtype x)
 void initTable()    //初始化符号表
 {
     symbolTable.curpnt = 0; //位置指针初始化，总是指向栈顶空的符号表项
-    symbolTable.totSub = 1;   //分程序总数清零
+    symbolTable.totSub = 0;   //分程序总数清零
     symbolTable.subpnt[0] = 0;  //第0个分程序为全局程序
 }
 
