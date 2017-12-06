@@ -30,8 +30,8 @@ void syntax()
     cnt = 0;                                                        //单词计数
     lineNum = 1;                                                    //行号计数
     nextSym();                                                      //预读一个单词
-    syntaxDbg = true;                                               //打印语法成分信息
-    deepDbg = true;                                                 //打印更详细的信息
+    syntaxDbg = false;                                               //打印语法成分信息
+    deepDbg = false;                                                 //打印更详细的信息
     program();                                                      //程序递归子程序
     printSymTable();                                                //打印符号表信息
 }
@@ -73,14 +73,16 @@ void program()                                                      //程序递�
         functype = symbol;                                //函数类型
         nextSym();
         funciden = token;                                          //函数名
-        nextSym();
-        if (funciden == "main")                                        //主函数
+        
+        if (symbol == MAINTK)                                        //主函数
         {
+            nextSym();
             if (functype != VOIDTK) serror();   //根据文法要求，主函数类型必为void
             mainFunc();
         }
         else
         {
+            nextSym();
             funcDef();
         }
     }
@@ -472,25 +474,26 @@ void funcCall()
 {
     //函数调用语句，此时已预读到左括号或分号，leftiden存放函数名
     int funcplace = searchTable(leftiden, true);
-    if (funcplace == -1) serror();  //未定义的函数
+    if (funcplace == -1) serror("Undefined function "+leftiden);  //未定义的函数
 
-    para = 0;   //参数数目
+    int para = 0;   //参数数目
 
     if (symbol == LPARTK)   //左括号后跟值参数表
     {
         nextSym();
-        paramVal();
+        para = paramVal();
         if (symbol != RPARTK) serror(); //值参数表后接右括号
         nextSym();
     }
     //否则为无参函数调用
 
-    if (para != symbolTable.item[funcplace].len) serror();  //传参个数与函数声明中的参数个数不同，报错
+    if (para != symbolTable.item[funcplace].len) serror("Function "+leftiden+" parameter counts not match");  //传参个数与函数声明中的参数个数不同，报错
     if (syntaxDbg) printf("Line %d: This is a function call statement.\n", lineNum);
 }
 
-void paramVal()
+int paramVal()
 {
+	int para = 0;
     expr(); //至少有一个表达式
     para++;
     while (symbol != RPARTK)
@@ -500,6 +503,7 @@ void paramVal()
         expr();
         para++;
     }
+    return para;
 }
 
 void assignState()
@@ -507,12 +511,12 @@ void assignState()
     //赋值语句，此时已预读到赋值符号或左中括号，leftiden存标识符
 
     int varplace = searchTable(leftiden, false);
-    if (varplace == -1) serror();   //未定义的标识符
-    else if (symbolTable.item[varplace].type == CONSTKD) serror();  //不允许向常数赋值
+    if (varplace == -1) serror("Undefined Variable "+leftiden);   //未定义的标识符
+    else if (symbolTable.item[varplace].kind == CONSTKD) serror("Cannot assign to constant "+leftiden);  //不允许向常数赋值
 
     if (symbol == LIPARTK)  //左中括号，数组元素赋值
     {
-        if (symbolTable.item[varplace].len == 0) serror();  //标识符对应符号不是数组
+        if (symbolTable.item[varplace].len == 0) serror(leftiden+" is not an array.");  //标识符对应符号不是数组
         nextSym();
         expr();
         if (symbol != RIPARTK) serror();
@@ -532,9 +536,9 @@ void readState()
     leftiden = token;   //此时leftiden存放标识符
 
     place = searchTable(leftiden, false);
-    if (place == -1) serror();  //未定义的变量
-    else if (symbolTable.item[place].kind == CONSTKD) serror(); //向常量赋值，不允许
-    else if (symbolTable.item[place].len > 0) serror(); //本文法读语句不支持数组读取
+    if (place == -1) serror("Undefined Variable "+leftiden);  //未定义的变量
+    else if (symbolTable.item[place].kind == CONSTKD) serror("Cannot assign constant "+leftiden); //向常量赋值，不允许
+    else if (symbolTable.item[place].len > 0) serror("Cannot assign array "+leftiden); //本文法读语句不支持数组读取
 
     nextSym();
     while (symbol == COMMATK)
@@ -544,9 +548,9 @@ void readState()
         leftiden = token;   //此时leftiden存放标识符
 
         place = searchTable(leftiden, false);
-        if (place == -1) serror();  //未定义的变量
-        else if (symbolTable.item[place].kind == CONSTKD) serror(); //向常量赋值，不允许
-        else if (symbolTable.item[place].len > 0) serror(); //本文法读语句不支持数组读取
+        if (place == -1) serror("Undefined Variable "+leftiden);  //未定义的变量
+        else if (symbolTable.item[place].kind == CONSTKD) serror("Cannot assign constant "+leftiden); //向常量赋值，不允许
+        else if (symbolTable.item[place].len > 0) serror("Cannot assign array "+leftiden); //本文法读语句不支持数组读取
 
         nextSym();
     }
@@ -699,9 +703,9 @@ void factor()
         if (symbol == LIPARTK)
         {
             //数组，只可能是变量
-            if (place == -1 || (place != -1 && (symbolTable.item[place].len) == 0)) serror();
-            else 
-                if (symbolTable.item[place].kind == CONSTKD) serror();
+            if (place == -1) serror("Undefined Variable "+leftiden);
+            else if (symbolTable.item[place].len == 0) serror("Not a array of variable "+leftiden);
+            else if (symbolTable.item[place].kind == CONSTKD) serror("There's no constant array "+leftiden);
             nextSym();
             expr();
             if (symbol != RIPARTK) serror();
@@ -724,8 +728,8 @@ void factor()
             {   //不是函数，是变量或常量
                 place = searchTable(leftiden, false);
 
-                if (place == -1) serror();  //都不是，报错
-                else if (symbolTable.item[place].len > 0) serror(); //此处不应出现数组
+                if (place == -1) serror("Undefined Identity "+leftiden);  //都不是，报错
+                else if (symbolTable.item[place].len > 0) serror("Invalid array usage "+leftiden); //此处不应出现数组
             }
         }
 

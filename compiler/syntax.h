@@ -81,6 +81,6 @@ void caseSubState();
 
 void caseDefault();
 
-void paramVal();
+int paramVal();
 
 #endif
