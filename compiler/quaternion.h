@@ -25,7 +25,7 @@ typedef struct
     string lvar, rvar, ret;     //左操作数、右操作数和结果
 } QCODE;
 
-QCODE midcode[MAXCODELEN];
+extern QCODE midcode[MAXCODELEN];
 
 extern ofstream midcodeout;    //中间代码输出文件
 

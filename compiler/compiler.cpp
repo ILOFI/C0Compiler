@@ -3,6 +3,8 @@
 
 #include "stdafx.h"
 
+using namespace std;
+
 symbolSet symbol;
 char nowchar;
 string token;
@@ -24,8 +26,8 @@ int codeCnt;        //中间代码条数指针
 int labelCnt;       //标签数指针
 int tvarCnt;        //临时变量个数
 bool midcodeDbg;
+QCODE midcode[MAXCODELEN];
 
-using namespace std;
 
 int _tmain(int argc, _TCHAR* argv[])
 {

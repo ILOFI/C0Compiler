@@ -81,11 +81,11 @@ void returnState();
 
 void condition();
 
-void caseList();
+vector<casestruct> caseList(string exitlab);
 
-void caseSubState();
+casestruct caseSubState(string exitlab);
 
-void caseDefault();
+string caseDefault(string exitlab);
 
 int paramVal();
 

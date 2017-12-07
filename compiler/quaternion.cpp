@@ -54,6 +54,6 @@ void genQuaternion(oprSet opr, string lvar, int rvar, string ret)             //
 
 void checkReturnCode()
 {
-    if (midcode[codeCnt].opr != RETOP)
+    if (midcode[codeCnt-1].opr != RETOP)
         genQuaternion(RETOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
 }

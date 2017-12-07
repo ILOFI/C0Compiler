@@ -505,8 +505,6 @@ void condition()
     var1 = expr();  //左操作数
     if (symbol == LESTK || symbol == LEQTK || symbol == GRETK || symbol == GEQTK || symbol == NEQTK || symbol == EQUTK) //关系运算符
     {
-        nextSym();
-        var2 = expr();  //右操作数
         oprSet relop;
         switch (symbol)
         {
@@ -517,6 +515,10 @@ void condition()
             case(NEQTK): relop = NEQOP; break;
             case(EQUTK): relop = EQUOP; break;
         }
+
+        nextSym();
+        var2 = expr();  //右操作数
+        
         genQuaternion(relop, var1, var2, oprstr[(int)SPACEOP]);
     }
     else
@@ -840,10 +842,11 @@ string expr()
 
     while (symbol == PLUSTK || symbol == MINUSTK)
     {
+        int top = (int)symbol - 17;
         nextSym();
         var2 = term();
         var3 = genNewVar(); //生成新变量储存结果
-        genQuaternion((oprSet)((int)symbol-18), var1, var2, var3);  //var3 = var1 +/- var2
+        genQuaternion((oprSet)top, var1, var2, var3);  //var3 = var1 +/- var2
         var1 = var3;        //将新的结果赋值给var1，依次往复
     }
     return var1;    //var1即为最终结果
@@ -855,10 +858,11 @@ string term()
     var1 = factor();    //var1表示当前因子的结果
     while (symbol == STARTK || symbol == DIVTK)
     {
+        int top = (int)symbol - 17;
         nextSym();
         var2 = factor();    //操作数2
         var3 = genNewVar(); //生成新的变量储存结果
-        genQuaternion((oprSet)((int)symbol-18), var1, var2, var3);  //var3 = var1 *// var2
+        genQuaternion((oprSet)top, var1, var2, var3);  //var3 = var1 *// var2
         var1 = var3;    //将新的结果赋值给var1
     }
     return var1;
