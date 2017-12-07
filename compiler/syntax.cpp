@@ -5,6 +5,8 @@ using namespace std;
 int address;
 int para;
 int place;
+symtype exprType;       //表达式的类型(int or char)
+bool inMain;
 
 void serror(string msg = ".")
 {
@@ -42,6 +44,7 @@ void syntax()
 void program()                                                      //程序递归子程序
 {
     address = 0;
+    inMain = false;
     if (symbol == CONSTTK)                                          //常量标识，调用常量声明子程序
     {
         nextSym();
@@ -63,6 +66,7 @@ void program()                                                      //程序递�
         }
         else if (symbol == LPARTK || symbol == LBRACETK)            //左括号或左大括号，有返回值函数定义
         {
+            inMain = false;
             funciden = variden;
             functype = vartype;
             funcDef();                                       //此时已预读三个，读到左括号或左大括号
@@ -79,12 +83,14 @@ void program()                                                      //程序递�
         
         if (symbol == MAINTK)                                        //主函数
         {
+            inMain = true;
             nextSym();
             if (functype != VOIDTK) serror();   //根据文法要求，主函数类型必为void
             mainFunc();
         }
         else
         {
+            inMain = false;
             nextSym();
             funcDef();
         }
@@ -495,11 +501,28 @@ void ifState()
 
 void condition()
 {
-    expr();
+    string var1, var2;  //条件的左操作数和右操作数
+    var1 = expr();  //左操作数
     if (symbol == LESTK || symbol == LEQTK || symbol == GRETK || symbol == GEQTK || symbol == NEQTK || symbol == EQUTK) //关系运算符
     {
         nextSym();
-        expr();
+        var2 = expr();  //右操作数
+        oprSet relop;
+        switch (symbol)
+        {
+            case(LESTK): relop = LESOP; break;
+            case(LEQTK): relop = LEQOP; break;
+            case(GRETK): relop = GREOP; break;
+            case(GEQTK): relop = GEQOP; break;
+            case(NEQTK): relop = NEQOP; break;
+            case(EQUTK): relop = EQUOP; break;
+        }
+        genQuaternion(relop, var1, var2, oprstr[(int)SPACEOP]);
+    }
+    else
+    {
+        //表达式为0条件为假，否则为真
+        genQuaternion(NEQOP, var1, 0, oprstr[(int)SPACEOP]);
     }
     //nextSym();
 }
@@ -527,9 +550,10 @@ void whileState()
     if (syntaxDbg) printf("Line %d: This is a WHILE statement.\n", lineNum);
 }
 
-void funcCall()
+string funcCall()
 {
     //函数调用语句，此时已预读到左括号或分号，leftiden存放函数名
+    string var1, var2, var3;    //约定：var1存放最终结果
     int funcplace = searchTable(leftiden, true);
     if (funcplace == -1) serror("Undefined function "+leftiden);  //未定义的函数
 
@@ -545,30 +569,45 @@ void funcCall()
     }
     //否则为无参函数调用
 
-    genQuaternion(CALLOP, funcname, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
+    var1 = genNewVar();     //生成新的临时变量
+    genQuaternion(CALLOP, funcname, oprstr[(int)SPACEOP], var1);    //var1 = funcname, call, 
 
     if (para != symbolTable.item[funcplace].len) serror("Function "+leftiden+" parameter counts not match");  //传参个数与函数声明中的参数个数不同，报错
     if (syntaxDbg) printf("Line %d: This is a function call statement.\n", lineNum);
+
+    return var1;
 }
 
 int paramVal()
 {
+    string var1;
+    vector<string> l;   //函数参数的向量表
+    l.clear();
 	int para = 0;
-    expr(); //至少有一个表达式
+    var1 = expr(); //至少有一个表达式
     para++;
+    l.push_back(var1);
     while (symbol != RPARTK)
     {
 		if (symbol != COMMATK) serror();
         nextSym();
-        expr();
+        var1 = expr();
         para++;
+        l.push_back(var1);
     }
+
+    //生成四元式载入对应函数参数
+    for (int i = 0; i < l.size(); i++)
+        genQuaternion(PARAVOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], l[i]);
+
     return para;
 }
 
 void assignState()
 {
     //赋值语句，此时已预读到赋值符号或左中括号，leftiden存标识符
+    string var1, var2;
+    bool isArray = symbol == LIPARTK;
 
     int varplace = searchTable(leftiden, false);
     if (varplace == -1) serror("Undefined Variable "+leftiden);   //未定义的标识符
@@ -578,18 +617,24 @@ void assignState()
     {
         if (symbolTable.item[varplace].len == 0) serror(leftiden+" is not an array.");  //标识符对应符号不是数组
         nextSym();
-        expr();
+        var1 = expr();      //var1存放数组索引
         if (symbol != RIPARTK) serror();
         nextSym();  //此时symbol应当为赋值符号
     }
     if (symbol != ASSTK) serror();
     nextSym();
-    expr();
+    var2 = expr();      //var2存放表达式右端的值
+    if (isArray)    //给数组赋值 []=, var2, var1, leftiden 即leftiden[var1] = var2
+        genQuaternion(ASSAOP, var2, var1, leftiden);
+    else        //否则, =, var2, , leftiden
+        genQuaternion(ASSOP, var2, oprstr[(int)SPACEOP], leftiden); 
     if (syntaxDbg) printf("Line %d: This is a assign statement.\n", lineNum);
 }
 
 void readState()
 {
+    symtype vartp;
+
     if (symbol != LPARTK) serror(); //标识符前应加左括号
     nextSym();
     if (symbol != IDENTK) serror(); //scanf语句至少有一个标识符
@@ -599,6 +644,9 @@ void readState()
     if (place == -1) serror("Undefined Variable "+leftiden);  //未定义的变量
     else if (symbolTable.item[place].kind == CONSTKD) serror("Cannot assign constant "+leftiden); //向常量赋值，不允许
     else if (symbolTable.item[place].len > 0) serror("Cannot assign array "+leftiden); //本文法读语句不支持数组读取
+
+    vartp = symbolTable.item[place].type;
+    genQuaternion(SCNFOP, oprstr[(int)vartp+2], oprstr[(int)SPACEOP], leftiden);
 
     nextSym();
     while (symbol == COMMATK)
@@ -612,6 +660,9 @@ void readState()
         else if (symbolTable.item[place].kind == CONSTKD) serror("Cannot assign constant "+leftiden); //向常量赋值，不允许
         else if (symbolTable.item[place].len > 0) serror("Cannot assign array "+leftiden); //本文法读语句不支持数组读取
 
+        vartp = symbolTable.item[place].type;
+        genQuaternion(SCNFOP, oprstr[(int)vartp+2], oprstr[(int)SPACEOP], leftiden);
+
         nextSym();
     }
     if (symbol != RPARTK) serror();
@@ -621,135 +672,223 @@ void readState()
 
 void writeState()
 {
+    string var1 = oprstr[(int)SPACEOP];     //字符串
+    string var2 = oprstr[(int)SPACEOP];     //表达式
+
     if (symbol != LPARTK) serror(); //printf后应加括号
     nextSym();
     if (symbol != STRINGV)  //情况3：括号内只有表达式
     {
-        expr();
+        var2 = expr();
         //nextSym();
     }
     else
     {
         //情况1，2：字符串，表达式 / 字符串
+        var1 = token;
         nextSym();
         if (symbol == COMMATK)
         {
             nextSym();
-            expr();
+            var2 = expr();
         }
     }
     if (symbol != RPARTK) serror();
     nextSym();    
+
+    genQuaternion(PRNTOP, var1, var2, oprstr[(int)exprType+2]);
     if (syntaxDbg) printf("Line %d: This is a write statement.\n", lineNum);
 }
 
 void switchState()
 {
+    string var1;
+    string exitlab = genNewLab();   //var1存放switch表达式值，exitlab指向下一条语句
+    string startlab = genNewLab();  //start存放指向转移表开头的标签
+    string deflab = "";    //default语句专用label
+
+    vector<casestruct> casesubs;         //存放每个case子语句常量和标签
+
     if (symbol != LPARTK) serror();
     nextSym();
-    expr();
+    var1 = expr();
+
+    genQuaternion(JMPOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], startlab); //跳到状态表部分
+
     if (symbol != RPARTK) serror();
     nextSym();
     if (symbol != LBRACETK) serror();
     nextSym();
     if (symbol != CASETK) serror(); //情况表至少会有一个情况子语句
     nextSym();
-    caseList(); //情况表
+    casesubs = caseList(exitlab); //情况表
     if (symbol == DEFAULTTK)
     {
         nextSym();
-        caseDefault();
+        deflab = caseDefault(exitlab);
     }
     if (symbol != RBRACETK) serror();
     nextSym();
+
+    genQuaternion(LABOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], startlab);
+    //以下是情况表判断部分：
+    for (int i = 0; i < casesubs.size(); ++i)
+    {
+        genQuaternion(NEQOP, var1, casesubs[i].constval, oprstr[(int)SPACEOP]);
+        //如果var1的值与常量值相等就跳转到该标签
+        genQuaternion(JNEOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], casesubs[i].label);
+    }
+
+    if (deflab != "")   //若有default语句，最后直接无条件跳转至该语句
+        genQuaternion(JMPOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], deflab);
+
+    genQuaternion(LABOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], exitlab);
+
     if (syntaxDbg) printf("Line %d: This is a SWITCH statement.\n", lineNum);
 }
 
-void caseList()
+vector<casestruct> caseList(string exitlab)
 {
-    caseSubState();
+    vector<casestruct> casesubs;         //存放每个case子语句常量和标签
+    casesubs.push_back(caseSubState(exitlab));
     while (symbol == CASETK)
     {
         nextSym();
-        caseSubState();
+        casesubs.push_back(caseSubState(exitlab));
     }
+    return casesubs;
 }
 
-void caseSubState()
+casestruct caseSubState(string exitlab)
 {
+    casestruct substruct;
+    substruct.label = genNewLab();      //生成子语句的label
+
+    genQuaternion(LABOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], substruct.label);
+
     if (symbol == CHARV)
-        constcval = token[0];
+        substruct.constval = (int)token[0];
     else
-        constival = numericDef();
+        substruct.constval = numericDef();
     nextSym();
     if (symbol != COLONTK) serror();    //常量后应接括号
     nextSym();
     statement();
+    //子语句结束后直接跳出switch
+    genQuaternion(JMPOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], exitlab);
+
     if (syntaxDbg) printf("Line %d: This is a case-sub statement.\n", lineNum);
+
+    return substruct;
 }
 
-void caseDefault()
+string caseDefault(string exitlab)
 {
+    string dlab = genNewLab();
+
+    genQuaternion(LABOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], dlab);
+
     if (symbol != COLONTK) serror();
     nextSym();
     statement();
+
+    genQuaternion(JMPOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], exitlab);
+
     if (syntaxDbg) printf("Line %d: This is a case-default statement.\n", lineNum);
+
+    return dlab;
 }
 
 void returnState()
 {
+    string var1 = oprstr[(int)SPACEOP];    //表达式的返回结果
     if (symbol == LPARTK)   //return后接表达式
     {
         nextSym();
-        expr();
+        var1 = expr();
         if (symbol != RPARTK) serror();
         nextSym();
     }
+
+    if (inMain)     //main函数里的返回值代表程序终止
+        genQuaternion(HALTOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
+    else
+        genQuaternion(RETOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], var1);
+
     if (syntaxDbg) printf("Line %d: This is a return statement.\n", lineNum);
     
 }
 
-void expr()
+string expr()
 {
+    bool negSym = symbol == MINUSTK;    //检查第一个项前面是否有负号
+    string var1, var2, var3;    //临时变量
+    exprType = INTTP;           //表达式默认表示整型
+
     if (symbol == PLUSTK || symbol == MINUSTK)
     {
         nextSym();
     }
-    term();
+    var1 = term();          //当前项的结果
+
+    if (negSym)     //有负号
+    {
+        var2 = genNewVar();     //生成一个新的临时变量
+        genQuaternion(SUBOP, oprstr[(int)ZEROOP], var1, var2);  //var2 = 0-var1
+        var1 = var2;        //此时var1与非循环的保持一致，表示当前项的结果
+    }
+
     while (symbol == PLUSTK || symbol == MINUSTK)
     {
         nextSym();
-        term();
+        var2 = term();
+        var3 = genNewVar(); //生成新变量储存结果
+        genQuaternion((oprSet)((int)symbol-18), var1, var2, var3);  //var3 = var1 +/- var2
+        var1 = var3;        //将新的结果赋值给var1，依次往复
     }
+    return var1;    //var1即为最终结果
 }
 
-void term()
+string term()
 {
-    factor();
+    string var1, var2, var3;
+    var1 = factor();    //var1表示当前因子的结果
     while (symbol == STARTK || symbol == DIVTK)
     {
         nextSym();
-        factor();
+        var2 = factor();    //操作数2
+        var3 = genNewVar(); //生成新的变量储存结果
+        genQuaternion((oprSet)((int)symbol-18), var1, var2, var3);  //var3 = var1 *// var2
+        var1 = var3;    //将新的结果赋值给var1
     }
+    return var1;
 }
 
-void factor()
+string factor()
 {
+    string var1, var2, var3;    //约定：var1存放最终结果
+    char tvar[256];
     if (symbol == LPARTK)
     {
+        //(表达式)
         nextSym();
-        expr();
+        var1 = expr();      //var1此时存放的最终结果
         if (symbol != RPARTK) serror();
         nextSym();
     }
     else if (symbol == CHARV)
     {
+        //字符类型，在表达式中以数值参与运算
+        exprType = CHARTP;
         constcval = token[0];
+        var1 = int_to_str((int)constcval);
         nextSym();
     }
     else if (symbol == PLUSTK || symbol == MINUSTK || symbol == NDIGV || symbol == DIGV || symbol == UINTV)
     {
+        //整数
         constival = numericDef();
+        var1 = int_to_str((int)constival);
         nextSym();
     }
     else
@@ -766,8 +905,14 @@ void factor()
             if (place == -1) serror("Undefined Variable "+leftiden);
             else if (symbolTable.item[place].len == 0) serror("Not a array of variable "+leftiden);
             else if (symbolTable.item[place].kind == CONSTKD) serror("There's no constant array "+leftiden);
+            
+            if (symbolTable.item[place].type == CHARTP) exprType = CHARTP;
             nextSym();
-            expr();
+            var1 = genNewVar();    //var1为最终结果
+            var2 = expr();      //var2存放数组索引
+            var3 = leftiden;
+            genQuaternion(AASSOP, var3, var2, var1);   //Array assign取数组元素 =[] var1 = var3[var2]
+
             if (symbol != RIPARTK) serror();
             nextSym();
         }
@@ -775,7 +920,9 @@ void factor()
         {
             //有返回值函数调用(有参)，当前符号：左括号
             //nextSym();
-            funcCall();
+            place = searchTable(leftiden, true);
+            if (symbolTable.item[place].type == CHARTP) exprType = CHARTP;
+            var1 = funcCall();
         }
         else
         {
@@ -783,15 +930,29 @@ void factor()
             //nextSym();
             //首先检查是否为函数
             if ((place = searchTable(leftiden, true)) != -1)
-                funcCall();
+            {
+                if (symbolTable.item[place].type == CHARTP) exprType = CHARTP;
+                var1 = funcCall();
+            }
+                
             else 
             {   //不是函数，是变量或常量
                 place = searchTable(leftiden, false);
 
                 if (place == -1) serror("Undefined Identity "+leftiden);  //都不是，报错
                 else if (symbolTable.item[place].len > 0) serror("Invalid array usage "+leftiden); //此处不应出现数组
+                else
+                {
+                    if (symbolTable.item[place].type == CHARTP) exprType = CHARTP;
+                    if (symbolTable.item[place].kind == CONSTKD)    //是常量，直接打印值
+                        var1 = int_to_str(symbolTable.item[place].value);
+                    else    //变量直接取变量名
+                        var1 = leftiden;
+                }
             }
         }
 
     }
+
+    return var1;
 }

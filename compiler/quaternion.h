@@ -10,13 +10,13 @@ using namespace std;
 enum oprSet {CONSTOP, VAROP, INTOP, CHAROP, VOIDOP, ENDOP, ADDOP, SUBOP, MULOP, DIVOP, FUNCOP, 
              SCNFOP, PRNTOP, RETOP, LABOP, PARAOP, PARAVOP, CALLOP, JNEOP, JMPOP,
              GREOP, LESOP, EQUOP, NEQOP, GEQOP, LEQOP, ASSOP, ASSAOP, AASSOP,
-             SPACEOP};
+             SPACEOP, ZEROOP, HALTOP};
 
 const string oprstr[] = {
     "const", "var", "int", "char", "void", "end", "+", "-", "*", "/", "func",
     "scanf", "prntf", "ret", "lab", "para", "parav", "call", "jne", "jmp",
     ">", "<", "==", "!=", ">=", "<=", "=", "[]=", "=[]",
-    " "
+    " ", "0", "halt"
 };
 
 typedef struct

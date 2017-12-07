@@ -17,6 +17,12 @@ extern symbolSet consttype;
 extern int constival;
 extern char constcval;
 
+typedef struct
+{
+    int constval;
+    string label;
+} casestruct;   //case子语句的结构
+
 extern void getSym();
 
 extern char *symbol_type_to_str(enum symbolSet type);
@@ -49,11 +55,11 @@ void statementList();
 
 void mainFunc();
 
-void expr();
+string expr();
 
-void term();
+string term();
 
-void factor();
+string factor();
 
 void statement();
 
@@ -61,7 +67,7 @@ void ifState();
 
 void whileState();
 
-void funcCall();
+string funcCall();
 
 void assignState();
 
