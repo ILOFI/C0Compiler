@@ -290,7 +290,7 @@ void funcDef()                                                      //函数定�
     else serror();  //无左大括号，不符合文法要求
     //注意：此时ret指令默认在return语句中生成，而无返回值函数可能没有return语句?
     //可以在添加endop前检查当前指令是否为return，若不是，手动添加
-    checkReturnCode();
+    checkReturnCode(inMain);
     genQuaternion(ENDOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
 }
 
@@ -378,6 +378,7 @@ void mainFunc()                                                     //主函数
     }
     else serror();
 
+    checkReturnCode(inMain);
     genQuaternion(ENDOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
 }
 
@@ -571,7 +572,8 @@ string funcCall()
     }
     //否则为无参函数调用
 
-    var1 = genNewVar();     //生成新的临时变量
+    if (symbolTable.item[funcplace].type != VOIDTP) var1 = genNewVar();
+    else var1 = oprstr[(int)SPACEOP];
     genQuaternion(CALLOP, funcname, oprstr[(int)SPACEOP], var1);    //var1 = funcname, call, 
 
     if (para != symbolTable.item[funcplace].len) serror("Function "+leftiden+" parameter counts not match");  //传参个数与函数声明中的参数个数不同，报错
@@ -608,7 +610,7 @@ int paramVal()
 void assignState()
 {
     //赋值语句，此时已预读到赋值符号或左中括号，leftiden存标识符
-    string var1, var2;
+    string var1, var2, var3 = leftiden; //var3存标识符
     bool isArray = symbol == LIPARTK;
 
     int varplace = searchTable(leftiden, false);
@@ -627,9 +629,9 @@ void assignState()
     nextSym();
     var2 = expr();      //var2存放表达式右端的值
     if (isArray)    //给数组赋值 []=, var2, var1, leftiden 即leftiden[var1] = var2
-        genQuaternion(ASSAOP, var2, var1, leftiden);
+        genQuaternion(ASSAOP, var2, var1, var3);
     else        //否则, =, var2, , leftiden
-        genQuaternion(ASSOP, var2, oprstr[(int)SPACEOP], leftiden); 
+        genQuaternion(ASSOP, var2, oprstr[(int)SPACEOP], var3); 
     if (syntaxDbg) printf("Line %d: This is a assign statement.\n", lineNum);
 }
 
@@ -821,11 +823,11 @@ void returnState()
     
 }
 
-string expr()
+string expr(symtype lasttp)
 {
     bool negSym = symbol == MINUSTK;    //检查第一个项前面是否有负号
     string var1, var2, var3;    //临时变量
-    exprType = INTTP;           //表达式默认表示整型
+    exprType = lasttp;           //表达式默认表示整型
 
     if (symbol == PLUSTK || symbol == MINUSTK)
     {
@@ -876,7 +878,7 @@ string factor()
     {
         //(表达式)
         nextSym();
-        var1 = expr();      //var1此时存放的最终结果
+        var1 = expr(exprType);      //var1此时存放的最终结果
         if (symbol != RPARTK) serror();
         nextSym();
     }
@@ -912,9 +914,9 @@ string factor()
             
             if (symbolTable.item[place].type == CHARTP) exprType = CHARTP;
             nextSym();
-            var1 = genNewVar();    //var1为最终结果
-            var2 = expr();      //var2存放数组索引
             var3 = leftiden;
+            var1 = genNewVar();    //var1为最终结果
+            var2 = expr(exprType);      //var2存放数组索引
             genQuaternion(AASSOP, var3, var2, var1);   //Array assign取数组元素 =[] var1 = var3[var2]
 
             if (symbol != RIPARTK) serror();

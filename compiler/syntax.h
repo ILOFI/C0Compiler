@@ -3,6 +3,8 @@ using namespace std;
 #ifndef _SYNTAX_H
 #define _SYNTAX_H
 
+#include "symtable.h"
+
 extern symbolSet symbol;
 extern char nowchar;
 extern string token;
@@ -55,7 +57,7 @@ void statementList();
 
 void mainFunc();
 
-string expr();
+string expr(enum symtype lasttp = INTTP);
 
 string term();
 
@@ -90,3 +92,4 @@ string caseDefault(string exitlab);
 int paramVal();
 
 #endif
+

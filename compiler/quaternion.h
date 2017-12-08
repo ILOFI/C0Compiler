@@ -46,6 +46,6 @@ void genQuaternion(oprSet opr, string lvar, string rvar, string ret);          /
 
 void genQuaternion(oprSet opr, string lvar, int rvar, string ret);             //生成一条四元式（右操作数为整型）
 
-void checkReturnCode();                 //检查当前是否有一条ret指令，若没有手动添加一条
+void checkReturnCode(bool inMain);                 //检查当前是否有一条ret指令，若没有手动添加一条
 
 #endif

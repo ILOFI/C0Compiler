@@ -12,7 +12,7 @@ void initQuaternion()
 string genNewLab()
 {
     char label[16];
-    sprintf(label, "_Label_%d", labelCnt++);
+    sprintf(label, "_label_%d", labelCnt++);
     return label;
 }
 
@@ -32,28 +32,47 @@ string int_to_str(int x)
 
 void genQuaternion(oprSet opr, string lvar, string rvar, string ret)          //生成一条四元式
 {
+    if (opr != PRNTOP) transform(lvar.begin(), lvar.end(), lvar.begin(), ::tolower);
+    transform(rvar.begin(), rvar.end(), rvar.begin(), ::tolower);
+    transform(ret.begin(), ret.end(), ret.begin(), ::tolower);
+
     midcode[codeCnt].opr = opr;
     midcode[codeCnt].lvar = lvar;
     midcode[codeCnt].rvar = rvar;
     midcode[codeCnt].ret = ret;
     codeCnt++;
 
+    if (midcodeDbg && opr == FUNCOP) cout << endl; 
     if (midcodeDbg) cout << oprstr[(int)opr] << ", " << lvar << ", " << rvar << ", " << ret << endl;
+    if (midcodeDbg && opr == ENDOP) cout << endl; 
 }
 
 void genQuaternion(oprSet opr, string lvar, int rvar, string ret)             //生成一条四元式（右操作数为整型）
 {
+    if (opr != PRNTOP) transform(lvar.begin(), lvar.end(), lvar.begin(), ::tolower);
+    transform(ret.begin(), ret.end(), ret.begin(), ::tolower);
+
     midcode[codeCnt].opr = opr;
     midcode[codeCnt].lvar = lvar;
     midcode[codeCnt].rvar = int_to_str(rvar);
     midcode[codeCnt].ret = ret;
     codeCnt++;
 
+    if (midcodeDbg && opr == FUNCOP) cout << endl; 
     if (midcodeDbg) cout << oprstr[(int)opr] << ", " << lvar << ", " << int_to_str(rvar) << ", " << ret << endl;
+    if (midcodeDbg && opr == ENDOP) cout << endl; 
 }
 
-void checkReturnCode()
+void checkReturnCode(bool inMain)
 {
-    if (midcode[codeCnt-1].opr != RETOP)
-        genQuaternion(RETOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
+    if (inMain)
+    {
+        if (midcode[codeCnt-1].opr != HALTOP)
+            genQuaternion(HALTOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
+    }
+    else 
+    {
+        if (midcode[codeCnt-1].opr != RETOP)
+            genQuaternion(RETOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
+    }
 }
