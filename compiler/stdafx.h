@@ -25,3 +25,4 @@
 #include "symtable.h"
 #include "errhandler.h"
 #include "quaternion.h"
+#include "mipscode.h"

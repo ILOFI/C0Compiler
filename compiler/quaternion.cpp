@@ -7,6 +7,7 @@ void initQuaternion()
     codeCnt = 0;
     labelCnt = 0;
     tvarCnt = 0;
+    constStrings.clear();
 }
 
 string genNewLab()
@@ -20,6 +21,14 @@ string genNewVar()
 {
     char var[16];
     sprintf(var, "_t_%d", tvarCnt++);
+    return var;
+}
+
+string getStringLab()
+{
+    //获得常量字符串当前标号: _string_$d
+    char var[32];
+    sprintf(var, "_string_%d", constStrings.size());
     return var;
 }
 

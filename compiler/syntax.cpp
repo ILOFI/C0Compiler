@@ -689,7 +689,8 @@ void writeState()
     else
     {
         //情况1，2：字符串，表达式 / 字符串
-        var1 = token;
+        var1 = getStringLab();
+        constStrings.push_back(token);
         nextSym();
         if (symbol == COMMATK)
         {

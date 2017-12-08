@@ -33,12 +33,15 @@ extern int codeCnt;        //中间代码条数指针
 extern int labelCnt;       //标签数指针
 extern int tvarCnt;        //临时变量个数
 extern bool midcodeDbg;     //输出调试信息
+extern vector<string> constStrings;
 
 void initQuaternion();      //初始化
 
 string genNewLab();        //生成一个新标签
 
 string genNewVar();        //生成一个新的临时变量
+
+string getStringLab();
 
 string int_to_str(int x);
 
