@@ -66,4 +66,6 @@ void aass_code();
 
 void halt_code();
 
+void newline_code();
+
 #endif

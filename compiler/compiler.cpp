@@ -43,6 +43,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	freopen(inpath.c_str(), "r", stdin);
 	mipsfile.open(asmpath, ios::out);
 	syntax();
+	genMipsCode();
 	fclose(stdin);
 	mipsfile.close();
 	cout << "Syntax Analysis Finished!" << endl;
