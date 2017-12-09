@@ -20,7 +20,7 @@ string genNewLab()
 string genNewVar()
 {
     char var[16];
-    sprintf(var, "_t_%d", tvarCnt++);
+    sprintf(var, "$*t_%d", tvarCnt++);
     return var;
 }
 
