@@ -32,8 +32,6 @@ void initMips();
 
 void var_code();
 
-void end_code();
-
 void calc_code();
 
 void func_code();

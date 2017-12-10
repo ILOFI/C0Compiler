@@ -5,7 +5,6 @@ using namespace std;
 int codepnt;    //当前处理到的四元式指针
 int offset;     //当前局部变量地址偏移
 int paravcnt;   //传入的参数个数
-int paracnt;    //函数形参数
 vector<Localvar> localvar;      //当前子程序的局部变量
 
 int addLocalVar(string name, int size) //添加局部变量，size表示数组长度，并返回其偏移地址
@@ -14,7 +13,6 @@ int addLocalVar(string name, int size) //添加局部变量，size表示数组�
     lv.name = name;
     lv.address = offset;
     localvar.push_back(lv);
-    //mipsfile << "\t\tsubi\t$sp\t$sp\t" << size*4 << endl;
 
     offset += size * 4;
     return lv.address;
@@ -43,9 +41,6 @@ void genMipsCode()
         {
             //根据不同的运算符生成对应mips指令
             case(VAROP):    var_code();
-                            break;
-
-            case(ENDOP):    end_code();
                             break;
             
             case(ADDOP):    
@@ -118,7 +113,7 @@ void initMips()
     paravcnt = 0;
 
     //生成数据段信息(.data)
-    mipsfile << "\t\t.data" << endl;
+    mipsfile << "\t.data" << endl;
 
     //生成全局常量信息
     while (midcode[codepnt].opr == CONSTOP)
@@ -151,9 +146,9 @@ void initMips()
     mipsfile << "._string_nl:\t.asciiz\t\"\\n\"" << endl; 
 
     //准备生成代码段信息
-    mipsfile << "\t\t.text" << endl;
-    mipsfile << "\t\tj\tmain" << endl;
-    mipsfile << "\t\tnop" << endl;
+    mipsfile << "\t.text" << endl;
+    mipsfile << "\tj\tmain" << endl;
+    mipsfile << "\tnop" << endl;
 }
 
 void var_code()
@@ -166,11 +161,6 @@ void var_code()
     }
     else
         addLocalVar(midcode[codepnt].ret);
-}
-
-void end_code()
-{
-    
 }
 
 void calc_code()
@@ -187,52 +177,52 @@ void calc_code()
 
     //左操作数存t0
     if (isInt(midcode[codepnt].lvar[0]))
-        mipsfile << "\t\tli\t$t0\t" << midcode[codepnt].lvar << endl;
+        mipsfile << "\tli\t$t0\t" << midcode[codepnt].lvar << endl;
     else
     {
         addr = -1 * findLocalvar(midcode[codepnt].lvar);
         if (addr == 1)     //全局变量，直接加载地址
         {
-            mipsfile << "\t\tla\t$t0\t" << midcode[codepnt].lvar << endl;
-            mipsfile << "\t\tlw\t$t0\t($t0)" << endl;
+            mipsfile << "\tla\t$t0\t" << midcode[codepnt].lvar << endl;
+            mipsfile << "\tlw\t$t0\t($t0)" << endl;
         }
         else
-            mipsfile << "\t\tlw\t$t0\t" << addr << "($fp)" << endl;
+            mipsfile << "\tlw\t$t0\t" << addr << "($fp)" << endl;
     }
 
     //右操作数存t1
     if (isInt(midcode[codepnt].rvar[0]))
-        mipsfile << "\t\tli\t$t1\t" << midcode[codepnt].rvar << endl;
+        mipsfile << "\tli\t$t1\t" << midcode[codepnt].rvar << endl;
     else
     {
         addr = -1 * findLocalvar(midcode[codepnt].rvar);
         if (addr == 1)
         {
-            mipsfile << "\t\tla\t$t1\t" << midcode[codepnt].rvar << endl;
-            mipsfile << "\t\tlw\t$t1\t($t1)" << endl;
+            mipsfile << "\tla\t$t1\t" << midcode[codepnt].rvar << endl;
+            mipsfile << "\tlw\t$t1\t($t1)" << endl;
         }
         else
-            mipsfile << "\t\tlw\t$t1\t" << addr << "($fp)" << endl;
+            mipsfile << "\tlw\t$t1\t" << addr << "($fp)" << endl;
     }
 
-    mipsfile << "\t\t" << op << "\t$t0\t$t0\t$t1" << endl;
+    mipsfile << "\t" << op << "\t$t0\t$t0\t$t1" << endl;
 
     //结果保存
     if (isTempVal(midcode[codepnt].ret))    //结果为四元式的临时变量
     {
         addr = -1 * addLocalVar(midcode[codepnt].ret);
-        mipsfile << "\t\tsw\t$t0\t" << addr << "($fp)" << endl;
+        mipsfile << "\tsw\t$t0\t" << addr << "($fp)" << endl;
     }
     else
     {
         addr = -1 * findLocalvar(midcode[codepnt].ret);
         if (addr == 1)     //全局变量
         {
-            mipsfile << "\t\tla\t$t1\t" << midcode[codepnt].ret << endl;
-            mipsfile << "\t\tsw\t$t0\t($t1)" << endl;
+            mipsfile << "\tla\t$t1\t" << midcode[codepnt].ret << endl;
+            mipsfile << "\tsw\t$t0\t($t1)" << endl;
         }
         else
-            mipsfile << "\t\tsw\t$t0\t" << addr << "($fp)" << endl;
+            mipsfile << "\tsw\t$t0\t" << addr << "($fp)" << endl;
     }
 }
 
@@ -242,8 +232,8 @@ void func_code()
     //进入函数
     //新的活动记录
     //$sp以下位置为新的函数活动记录，0位存prev $fp，-4位存prev $ra，-8位以下存函数参数和局部变量
-    mipsfile << "\t\tmove\t$fp\t$sp" << endl;   //fp为当前sp地址
-    mipsfile << "\t\tsub\t$sp\t$sp\t8" << endl;
+    mipsfile << "\tmove\t$fp\t$sp" << endl;   //fp为当前sp地址
+    mipsfile << "\tsub\t$sp\t$sp\t8" << endl;
     offset = 8;
     localvar.clear();   //清空临时变量表
 }
@@ -254,16 +244,16 @@ void scnf_code()
     int v0 = midcode[codepnt].lvar == "int" ? 5 : 12;
     int addr = -1 * findLocalvar(midcode[codepnt].ret);   //存储的地址
 
-    mipsfile << "\t\tli\t$v0\t" << v0 << endl;
-    mipsfile << "\t\tsyscall" << endl;
+    mipsfile << "\tli\t$v0\t" << v0 << endl;
+    mipsfile << "\tsyscall" << endl;
 
     if (addr == 1)
     {
-        mipsfile << "\t\tla\t$t0\t" << midcode[codepnt].ret << endl;
-        mipsfile << "\t\tsw\t$v0\t($t0)" << endl;
+        mipsfile << "\tla\t$t0\t" << midcode[codepnt].ret << endl;
+        mipsfile << "\tsw\t$v0\t($t0)" << endl;
     }
     else
-        mipsfile << "\t\tsw\t$v0\t" << addr << "($fp)" << endl;
+        mipsfile << "\tsw\t$v0\t" << addr << "($fp)" << endl;
 }
 
 void prnt_code()
@@ -271,31 +261,31 @@ void prnt_code()
     //prntf, [<string id>], [<variden or int>], <type>
     if (midcode[codepnt].lvar != " ")   //打印字符串
     {
-        mipsfile << "\t\tli\t$v0\t4" << endl;
-        mipsfile << "\t\tla\t$a0\t" << midcode[codepnt].lvar << endl;
-        mipsfile << "\t\tsyscall" << endl;
+        mipsfile << "\tli\t$v0\t4" << endl;
+        mipsfile << "\tla\t$a0\t" << midcode[codepnt].lvar << endl;
+        mipsfile << "\tsyscall" << endl;
     }
 
     if (midcode[codepnt].rvar != " ")   //打印表达式
     {
         int v0 = midcode[codepnt].ret == "int" ? 1 : 11;
-        mipsfile << "\t\tli\t$v0\t" << v0 << endl;
+        mipsfile << "\tli\t$v0\t" << v0 << endl;
 
         if (isInt(midcode[codepnt].rvar[0]))
-            mipsfile << "\t\tli\t$a0\t" << midcode[codepnt].rvar << endl;
+            mipsfile << "\tli\t$a0\t" << midcode[codepnt].rvar << endl;
         else
         {
             int addr = -1 * findLocalvar(midcode[codepnt].rvar);
             if (addr == 1)
             {
-                mipsfile << "\t\tla\t$a0\t" << midcode[codepnt].rvar << endl;
-                mipsfile << "\t\tlw\t$a0\t($a0)" << endl;
+                mipsfile << "\tla\t$a0\t" << midcode[codepnt].rvar << endl;
+                mipsfile << "\tlw\t$a0\t($a0)" << endl;
             }
             else
-                mipsfile << "\t\tlw\t$a0\t" << addr << "($fp)" << endl;
+                mipsfile << "\tlw\t$a0\t" << addr << "($fp)" << endl;
         }
 
-        mipsfile << "\t\tsyscall" << endl;
+        mipsfile << "\tsyscall" << endl;
     }
 
     newline_code();
@@ -308,28 +298,28 @@ void ret_code()
     if (midcode[codepnt].ret != " ")
     {
         if (isInt(midcode[codepnt].ret[0]))
-            mipsfile << "\t\tli\t$v1\t" << midcode[codepnt].ret << endl;
+            mipsfile << "\tli\t$v1\t" << midcode[codepnt].ret << endl;
         else
         {
             int addr = -1 * findLocalvar(midcode[codepnt].ret);
             if (addr == 1)
             {
-                mipsfile << "\t\tla\t$v1\t" << midcode[codepnt].ret << endl;
-                mipsfile << "\t\tlw\t$v1\t($v1)" << endl;
+                mipsfile << "\tla\t$v1\t" << midcode[codepnt].ret << endl;
+                mipsfile << "\tlw\t$v1\t($v1)" << endl;
             }
             else
-                mipsfile << "\t\tlw\t$v1\t" << addr << "($fp)" << endl;
+                mipsfile << "\tlw\t$v1\t" << addr << "($fp)" << endl;
         }
     }
         
     //恢复信息
-    mipsfile << "\t\tmove\t$sp\t$fp" << endl;
-    mipsfile << "\t\tlw\t$fp\t($fp)" << endl;
-    mipsfile << "\t\tmove\t$t0\t$ra" << endl;
-    mipsfile << "\t\tlw\t$ra\t-4($sp)" << endl;
+    mipsfile << "\tmove\t$sp\t$fp" << endl;
+    mipsfile << "\tlw\t$fp\t($fp)" << endl;
+    mipsfile << "\tmove\t$t0\t$ra" << endl;
+    mipsfile << "\tlw\t$ra\t-4($sp)" << endl;
 
-    mipsfile << "\t\tjr\t$t0" << endl;
-    mipsfile << "\t\tnop" << endl;
+    mipsfile << "\tjr\t$t0" << endl;
+    mipsfile << "\tnop" << endl;
 }
 
 void lab_code()
@@ -348,25 +338,25 @@ void parav_code()
 {
     //parav, , , <variden or const int>
 
-    mipsfile << "\t\tsub\t$sp\t$fp\t" << offset << endl;
+    mipsfile << "\tsub\t$sp\t$fp\t" << offset << endl;
     //首先将参数值存入t0中
     if (isInt(midcode[codepnt].ret[0]))
-        mipsfile << "\t\tli\t$t0\t" << midcode[codepnt].ret << endl;
+        mipsfile << "\tli\t$t0\t" << midcode[codepnt].ret << endl;
     else
     {
         int addr = -1 * findLocalvar(midcode[codepnt].ret);
         if (addr == 1)   //全局变量
         {
-            mipsfile << "\t\tla\t$t0\t" << midcode[codepnt].ret << endl;
-            mipsfile << "\t\tlw\t$t0\t($t0)" << endl;
+            mipsfile << "\tla\t$t0\t" << midcode[codepnt].ret << endl;
+            mipsfile << "\tlw\t$t0\t($t0)" << endl;
         }
         else
-            mipsfile << "\t\tlw\t$t0\t" << addr << "($fp)" << endl;
+            mipsfile << "\tlw\t$t0\t" << addr << "($fp)" << endl;
     }
 
     //直接将参数值存入栈的对应位置
     //此时函数call尚未发生，$sp以下位置为新的函数活动记录，0位存prev $fp，-4位存prev $ra，因此函数参数从-8位开始
-    mipsfile << "\t\tsw\t$t0" << -4*paravcnt-8 << "($sp)" << endl;
+    mipsfile << "\tsw\t$t0" << -4*paravcnt-8 << "($sp)" << endl;
     paravcnt++;
 }
 
@@ -374,19 +364,19 @@ void call_code()
 {
     //call, <funcname>, , [<return variden>]
 
-    mipsfile << "\t\tsub\t$sp\t$fp\t" << offset << endl;
+    mipsfile << "\tsub\t$sp\t$fp\t" << offset << endl;
     //$sp以下位置为新的函数活动记录，0位存prev $fp，-4位存prev $ra，-8位以下存函数参数
-    mipsfile << "\t\tsw\t$fp\t($sp)" << endl;
-    mipsfile << "\t\tsw\t$ra\t-4($sp)" << endl;
+    mipsfile << "\tsw\t$fp\t($sp)" << endl;
+    mipsfile << "\tsw\t$ra\t-4($sp)" << endl;
 
-    mipsfile << "\t\tjal\t" << midcode[codepnt].lvar << endl;
-    mipsfile << "\t\tnop" << endl;  //延迟槽
+    mipsfile << "\tjal\t" << midcode[codepnt].lvar << endl;
+    mipsfile << "\tnop" << endl;  //延迟槽
 
     //约定：$v1存放函数返回值
     if (midcode[codepnt].ret != " ")
     {
         int addr = -1 * addLocalVar(midcode[codepnt].ret);
-        mipsfile << "\t\tsw\t$v1\t" << addr << "($fp)" << endl;
+        mipsfile << "\tsw\t$v1\t" << addr << "($fp)" << endl;
     }
 
     paravcnt = 0;
@@ -396,13 +386,13 @@ void jne_code()
 {
     //JNE不满足跳转与关系运算符紧邻，只需要输出对应跳转标签即可
     mipsfile << midcode[codepnt].ret << endl;
-    mipsfile << "\t\tnop" << endl;
+    mipsfile << "\tnop" << endl;
 }
 
 void jmp_code()
 {
-    mipsfile << "\t\tj\t" << midcode[codepnt].ret << endl;
-    mipsfile << "\t\tnop" << endl;
+    mipsfile << "\tj\t" << midcode[codepnt].ret << endl;
+    mipsfile << "\tnop" << endl;
 }
 
 void relate_code()
@@ -424,61 +414,61 @@ void relate_code()
 
     //左操作数
     if (isInt(midcode[codepnt].lvar[0]))
-        mipsfile << "\t\tli\t$t0\t" << midcode[codepnt].lvar << endl;
+        mipsfile << "\tli\t$t0\t" << midcode[codepnt].lvar << endl;
     else
     {
         addr = -1 * findLocalvar(midcode[codepnt].lvar);
         if (addr == 1)
         {
-            mipsfile << "\t\tla\t$t0\t" << midcode[codepnt].lvar << endl;
-            mipsfile << "\t\tlw\t$t0\t($t0)" << endl;
+            mipsfile << "\tla\t$t0\t" << midcode[codepnt].lvar << endl;
+            mipsfile << "\tlw\t$t0\t($t0)" << endl;
         }
         else
-            mipsfile << "\t\tlw\t$t0\t" << addr << "($fp)" << endl;
+            mipsfile << "\tlw\t$t0\t" << addr << "($fp)" << endl;
     }
 
     if (isInt(midcode[codepnt].rvar[0]))
-        mipsfile << "\t\tli\t$t1\t" << midcode[codepnt].rvar << endl;
+        mipsfile << "\tli\t$t1\t" << midcode[codepnt].rvar << endl;
     else
     {
         addr = -1 * findLocalvar(midcode[codepnt].rvar);
         if (addr == 1)
         {
-            mipsfile << "\t\tla\t$t1\t" << midcode[codepnt].rvar << endl;
-            mipsfile << "\t\tlw\t$t1\t($t1)" << endl;
+            mipsfile << "\tla\t$t1\t" << midcode[codepnt].rvar << endl;
+            mipsfile << "\tlw\t$t1\t($t1)" << endl;
         }
         else
-            mipsfile << "\t\tlw\t$t1\t" << addr << "($fp)" << endl;
+            mipsfile << "\tlw\t$t1\t" << addr << "($fp)" << endl;
     }
 
-    mipsfile << "\t\t" << op << "\t$t0\t$t1\t";
+    mipsfile << "\t" << op << "\t$t0\t$t1\t";
 }
 
 void ass_code()
 {
     //=, <variden or const int>, , <dest iden>
     if (isInt(midcode[codepnt].lvar[0]))
-        mipsfile << "\t\tli\t$t0\t" << midcode[codepnt].lvar << endl;
+        mipsfile << "\tli\t$t0\t" << midcode[codepnt].lvar << endl;
     else
     {
         int addr = -1 * findLocalvar(midcode[codepnt].lvar);
         if (addr == 1)
         {
-            mipsfile << "\t\tla\t$t0\t" << midcode[codepnt].lvar << endl;
-            mipsfile << "\t\tlw\t$t0\t($t0)" << endl;
+            mipsfile << "\tla\t$t0\t" << midcode[codepnt].lvar << endl;
+            mipsfile << "\tlw\t$t0\t($t0)" << endl;
         }
         else
-            mipsfile << "\t\tlw\t$t0\t" << addr << "($fp)" << endl;
+            mipsfile << "\tlw\t$t0\t" << addr << "($fp)" << endl;
     }
 
     int addr = -1 * findLocalvar(midcode[codepnt].ret);
     if (addr == 1)
     {
-        mipsfile << "\t\tla\t$t1\t" << midcode[codepnt].ret << endl;
-        mipsfile << "\t\tsw\t$t0\t($t1)" << endl;
+        mipsfile << "\tla\t$t1\t" << midcode[codepnt].ret << endl;
+        mipsfile << "\tsw\t$t0\t($t1)" << endl;
     }
     else
-        mipsfile << "\t\tsw\t$t0\t" << addr << "($fp)" << endl;
+        mipsfile << "\tsw\t$t0\t" << addr << "($fp)" << endl;
 }
 
 void assa_code()
@@ -486,51 +476,50 @@ void assa_code()
     // assign array element: []=, result, index, arrname, arrname[index]=result
     //处理result，写入t0
     if (isInt(midcode[codepnt].lvar[0]))
-        mipsfile << "\t\tli\t$t0\t" << midcode[codepnt].lvar << endl;
+        mipsfile << "\tli\t$t0\t" << midcode[codepnt].lvar << endl;
     else
     {
         int addr = -1 * findLocalvar(midcode[codepnt].lvar);
         if (addr == 1)
         {
-            mipsfile << "\t\tla\t$t0\t" << midcode[codepnt].lvar << endl;
-            mipsfile << "\t\tlw\t$t0\t($t0)" << endl;
+            mipsfile << "\tla\t$t0\t" << midcode[codepnt].lvar << endl;
+            mipsfile << "\tlw\t$t0\t($t0)" << endl;
         }
         else
-            mipsfile << "\t\tlw\t$t0\t" << addr << "($fp)" << endl;
+            mipsfile << "\tlw\t$t0\t" << addr << "($fp)" << endl;
     }
 
     //处理index偏移，写入t1
     if (isInt(midcode[codepnt].rvar[0]))
-        mipsfile << "\t\tli\t$t1\t" << midcode[codepnt].rvar << endl;
+        mipsfile << "\tli\t$t1\t" << midcode[codepnt].rvar << endl;
     else
     {
         int addr = -1 * findLocalvar(midcode[codepnt].rvar);
         if (addr == 1)
         {
-            mipsfile << "\t\tla\t$t1\t" << midcode[codepnt].rvar << endl;
-            mipsfile << "\t\tlw\t$t1\t($t1)" << endl;
+            mipsfile << "\tla\t$t1\t" << midcode[codepnt].rvar << endl;
+            mipsfile << "\tlw\t$t1\t($t1)" << endl;
         }
         else
-            mipsfile << "\t\tlw\t$t1\t" << addr << "($fp)" << endl;
+            mipsfile << "\tlw\t$t1\t" << addr << "($fp)" << endl;
     }
-    //mipsfile << "\t\tmul\t$t1\t$t1\t-4" << endl;
 
     //处理arrname地址，写入t2
     int addr = -1 * findLocalvar(midcode[codepnt].ret);
     if (addr == 1)  //全局变量，数组地址应该正向延展
     {
-        mipsfile << "\t\tmul\t$t1\t$t1\t4" << endl;
-        mipsfile << "\t\tla\t$t2\t" << midcode[codepnt].ret << endl;
+        mipsfile << "\tmul\t$t1\t$t1\t4" << endl;
+        mipsfile << "\tla\t$t2\t" << midcode[codepnt].ret << endl;
     }
     else
     {
-        mipsfile << "\t\tmul\t$t1\t$t1\t-4" << endl;
-        mipsfile << "\t\tadd\t$t2\t$fp\t" << addr << endl;
+        mipsfile << "\tmul\t$t1\t$t1\t-4" << endl;
+        mipsfile << "\tadd\t$t2\t$fp\t" << addr << endl;
     }
 
     //计算出数组元素的地址并赋值
-    mipsfile << "\t\tadd\t$t1\t$t1\t$t2" << endl;
-    mipsfile << "\t\tsw\t$t0\t($t1)" << endl;
+    mipsfile << "\tadd\t$t1\t$t1\t$t2" << endl;
+    mipsfile << "\tsw\t$t0\t($t1)" << endl;
 }
 
 void aass_code()
@@ -540,44 +529,44 @@ void aass_code()
     int addr = -1 * findLocalvar(midcode[codepnt].lvar);
     string sign = addr == 1 ? "" : "-";
     if (addr == 1)
-        mipsfile << "\t\tla\t$t0\t" << midcode[codepnt].lvar << endl;
+        mipsfile << "\tla\t$t0\t" << midcode[codepnt].lvar << endl;
     else
-        mipsfile << "\t\tadd\t$t0\t$fp\t" << addr << endl;
+        mipsfile << "\tadd\t$t0\t$fp\t" << addr << endl;
 
     //处理index偏移，写入t1
     if (isInt(midcode[codepnt].rvar[0]))
-        mipsfile << "\t\tli\t$t1\t" << midcode[codepnt].rvar << endl;
+        mipsfile << "\tli\t$t1\t" << midcode[codepnt].rvar << endl;
     else
     {
         int addr = -1 * findLocalvar(midcode[codepnt].rvar);
         if (addr == 1)
         {
-            mipsfile << "\t\tla\t$t1\t" << midcode[codepnt].rvar << endl;
-            mipsfile << "\t\tlw\t$t1\t($t1)" << endl;
+            mipsfile << "\tla\t$t1\t" << midcode[codepnt].rvar << endl;
+            mipsfile << "\tlw\t$t1\t($t1)" << endl;
         }
         else
-            mipsfile << "\t\tlw\t$t1\t" << addr << "($fp)" << endl;
+            mipsfile << "\tlw\t$t1\t" << addr << "($fp)" << endl;
     }
-    mipsfile << "\t\tmul\t$t1\t$t1\t" << sign << "4" << endl;
+    mipsfile << "\tmul\t$t1\t$t1\t" << sign << "4" << endl;
 
     //获得数组真实地址并取到值，写入t1
-    mipsfile << "\t\tadd\t$t1\t$t0\t$t1" << endl;
-    mipsfile << "\t\tlw\t$t1\t($t1)" << endl;
+    mipsfile << "\tadd\t$t1\t$t0\t$t1" << endl;
+    mipsfile << "\tlw\t$t1\t($t1)" << endl;
 
     //targetiden为临时变量
     addr = -1 * addLocalVar(midcode[codepnt].ret);
-    mipsfile << "\t\tsw\t$t1\t" << addr << "($fp)" << endl;
+    mipsfile << "\tsw\t$t1\t" << addr << "($fp)" << endl;
 }
 
 void halt_code()
 {
-    mipsfile << "\t\tli\t$v0\t10" << endl;
-    mipsfile << "\t\tsyscall" << endl;
+    mipsfile << "\tli\t$v0\t10" << endl;
+    mipsfile << "\tsyscall" << endl;
 }
 
 void newline_code()
 {
-    mipsfile << "\t\tli\t$v0\t4" << endl;
-    mipsfile << "\t\tla\t$a0\t._string_nl" << endl;
-    mipsfile << "\t\tsyscall" << endl;
+    mipsfile << "\tli\t$v0\t4" << endl;
+    mipsfile << "\tla\t$a0\t._string_nl" << endl;
+    mipsfile << "\tsyscall" << endl;
 }
