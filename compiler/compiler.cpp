@@ -35,7 +35,7 @@ ofstream mipsfile;		//存放生成的汇编结果文件
 int _tmain(int argc, _TCHAR* argv[])
 {
 	string inpath, asmpath;
-	cout << "Syntax Analysis Program" << endl << "Input File Path: ";
+	cout << "Extend-C0 Compiler" << endl << "Input File Path: ";
 	cin >> inpath;
 	cout << "Input File is: " << inpath << endl;
 	cout << "MIPS result file path: ";
@@ -46,9 +46,9 @@ int _tmain(int argc, _TCHAR* argv[])
 	genMipsCode();
 	fclose(stdin);
 	mipsfile.close();
-	cout << "Syntax Analysis Finished!" << endl;
-	for (int i = 0; i < constStrings.size(); i++)
-		cout << i << ": " << constStrings[i] << endl;
+	cout << "MIPS result file generated!" << endl;
+	//for (int i = 0; i < constStrings.size(); i++)
+	//	cout << i << ": " << constStrings[i] << endl;
 	return 0;
 }
 

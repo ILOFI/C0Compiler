@@ -14,7 +14,7 @@ int addLocalVar(string name, int size) //添加局部变量，size表示数组�
     lv.name = name;
     lv.address = offset;
     localvar.push_back(lv);
-    mipsfile << "\t\tsubi\t$sp\t$sp\t" << size*4 << endl;
+    //mipsfile << "\t\tsubi\t$sp\t$sp\t" << size*4 << endl;
 
     offset += size * 4;
     return lv.address;
@@ -347,6 +347,8 @@ void para_code()
 void parav_code()
 {
     //parav, , , <variden or const int>
+
+    mipsfile << "\t\tsub\t$sp\t$fp\t" << offset << endl;
     //首先将参数值存入t0中
     if (isInt(midcode[codepnt].ret[0]))
         mipsfile << "\t\tli\t$t0\t" << midcode[codepnt].ret << endl;
@@ -371,6 +373,8 @@ void parav_code()
 void call_code()
 {
     //call, <funcname>, , [<return variden>]
+
+    mipsfile << "\t\tsub\t$sp\t$fp\t" << offset << endl;
     //$sp以下位置为新的函数活动记录，0位存prev $fp，-4位存prev $ra，-8位以下存函数参数
     mipsfile << "\t\tsw\t$fp\t($sp)" << endl;
     mipsfile << "\t\tsw\t$ra\t-4($sp)" << endl;
@@ -392,6 +396,7 @@ void jne_code()
 {
     //JNE不满足跳转与关系运算符紧邻，只需要输出对应跳转标签即可
     mipsfile << midcode[codepnt].ret << endl;
+    mipsfile << "\t\tnop" << endl;
 }
 
 void jmp_code()
@@ -508,14 +513,20 @@ void assa_code()
         else
             mipsfile << "\t\tlw\t$t1\t" << addr << "($fp)" << endl;
     }
-    mipsfile << "\t\tmul\t$t1\t$t1\t-4" << endl;
+    //mipsfile << "\t\tmul\t$t1\t$t1\t-4" << endl;
 
     //处理arrname地址，写入t2
     int addr = -1 * findLocalvar(midcode[codepnt].ret);
-    if (addr == 1)
+    if (addr == 1)  //全局变量，数组地址应该正向延展
+    {
+        mipsfile << "\t\tmul\t$t1\t$t1\t4" << endl;
         mipsfile << "\t\tla\t$t2\t" << midcode[codepnt].ret << endl;
+    }
     else
+    {
+        mipsfile << "\t\tmul\t$t1\t$t1\t-4" << endl;
         mipsfile << "\t\tadd\t$t2\t$fp\t" << addr << endl;
+    }
 
     //计算出数组元素的地址并赋值
     mipsfile << "\t\tadd\t$t1\t$t1\t$t2" << endl;
@@ -527,6 +538,7 @@ void aass_code()
     // array element assign: =[], arrname, index, targetiden
     //处理arrname地址，写入t0
     int addr = -1 * findLocalvar(midcode[codepnt].lvar);
+    string sign = addr == 1 ? "" : "-";
     if (addr == 1)
         mipsfile << "\t\tla\t$t0\t" << midcode[codepnt].lvar << endl;
     else
@@ -546,7 +558,7 @@ void aass_code()
         else
             mipsfile << "\t\tlw\t$t1\t" << addr << "($fp)" << endl;
     }
-    mipsfile << "\t\tmul\t$t1\t$t1\t-4" << endl;
+    mipsfile << "\t\tmul\t$t1\t$t1\t" << sign << "4" << endl;
 
     //获得数组真实地址并取到值，写入t1
     mipsfile << "\t\tadd\t$t1\t$t0\t$t1" << endl;
@@ -559,7 +571,7 @@ void aass_code()
 
 void halt_code()
 {
-    mipsfile << "\t\tli\t$t0\t10" << endl;
+    mipsfile << "\t\tli\t$v0\t10" << endl;
     mipsfile << "\t\tsyscall" << endl;
 }
 
