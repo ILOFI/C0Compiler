@@ -32,13 +32,12 @@ void syntax()
     cnt = 0;                                                        //单词计数
     lineNum = 1;                                                    //行号计数
     nextSym();                                                      //预读一个单词
-    syntaxDbg = false;                                               //打印语法成分信息
-    deepDbg = false;                                                 //打印更详细的信息
-    midcodeDbg = true;                                              //打印四元式信息
+    
     initTable();
     initQuaternion();
     program();                                                      //程序递归子程序
-    printSymTable();                                                //打印符号表信息
+    if (symTableDbg)
+        printSymTable();                                            //打印符号表信息
 }
 
 void program()                                                      //程序递归子程序

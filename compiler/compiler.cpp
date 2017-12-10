@@ -20,6 +20,7 @@ int constival;
 char constcval;
 
 symTable symbolTable;
+bool symTableDbg;
 
 ofstream midcodeout;
 int codeCnt;        //中间代码条数指针
@@ -42,6 +43,10 @@ int _tmain(int argc, _TCHAR* argv[])
 	cin >> asmpath;
 	freopen(inpath.c_str(), "r", stdin);
 	mipsfile.open(asmpath, ios::out);
+	syntaxDbg = false;                                               //打印语法成分信息
+    deepDbg = false;                                                 //打印更详细的信息
+    midcodeDbg = false;                                              //打印四元式信息
+	symTableDbg = false;											//打印符号表信息
 	syntax();
 	genMipsCode();
 	fclose(stdin);

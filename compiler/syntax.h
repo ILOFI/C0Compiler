@@ -13,6 +13,7 @@ extern bool errflag;
 
 extern string lastToken, variden, constiden, funciden, leftiden; //上一个标识符
 extern bool syntaxDbg, deepDbg;
+extern bool symTableDbg;
 extern symbolSet vartype, functype;
 extern int arrlen;
 extern symbolSet consttype;
