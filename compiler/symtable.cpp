@@ -49,7 +49,7 @@ int insertTable(string name, symkind kind, symtype type, int value, int address,
 	transform(name.begin(), name.end(), nname.begin(), ::tolower);
     if (symbolTable.curpnt >= TABSIZE)
     {
-        errmain();
+        errmain(SYMBOL_TABLE_FULL, lineNum);
         return -1;
     }
 

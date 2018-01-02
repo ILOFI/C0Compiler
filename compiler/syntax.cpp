@@ -8,7 +8,7 @@ int place;
 symtype exprType;       //表达式的类型(int or char)
 bool inMain;
 
-void serror(string msg = ".")
+void serror(string msg = "Syntax Error")
 {
     printf("Error on line %d: %s\n", lineNum, msg.c_str());
 }
@@ -56,8 +56,14 @@ void program()                                                      //程序递�
         // int a(int x, int y){} int a{}
         vartype = symbol;                                           //记录当前的变量类型(int or char)
         nextSym();                                                  //预读标识符
-        if (symbol != IDENTK) serror();                             //不是标识符，则报错
-        variden = token;                                          //保存标识符
+        if (symbol != IDENTK)
+        {
+            if (symbol == MAINTK) inMain = true;
+            errmain(INVALID_IDENTITY, lineNum, token);                   //非法标识符，则报错
+            variden = "$err";                                     //当前变量错误
+        }
+        else
+            variden = token;                                          //保存标识符
         nextSym();                                                  //再预读一个
         if (symbol == COMMATK || symbol == SEMITK || symbol == LIPARTK)//逗号或分号或左中括号，变量声明
         {
@@ -65,6 +71,7 @@ void program()                                                      //程序递�
         }
         else if (symbol == LPARTK || symbol == LBRACETK)            //左括号或左大括号，有返回值函数定义
         {
+            if (inMain) errmain(MAIN_TYPE_ERROR, lineNum);
             inMain = false;
             funciden = variden;
             functype = vartype;
@@ -84,11 +91,16 @@ void program()                                                      //程序递�
         {
             inMain = true;
             nextSym();
-            if (functype != VOIDTK) serror();   //根据文法要求，主函数类型必为void
+            if (functype != VOIDTK) errmain(MAIN_TYPE_ERROR, lineNum);   //根据文法要求，主函数类型必为void
             mainFunc();
         }
         else
         {
+            if (symbol != IDENTK)
+            {
+                errmain(INVALID_IDENTITY, lineNum, token);
+                //token = "$err";
+            }
             inMain = false;
             nextSym();
             funcDef();
@@ -113,12 +125,26 @@ void constDef()                                                     //常量定�
 {
     // int x = 3, y = +69; int x = -3; char x = 'v';
     consttype = symbol;
-    if (symbol != INTTK && symbol != CHARTK) serror();              //常量类型错误
+    if (symbol != INTTK && symbol != CHARTK) 
+    {
+        errmain(INVALID_TYPE, lineNum, token);              //常量类型错误
+        //直接跳到分号
+        while (symbol != SEMITK)
+            nextSym();
+    }
+    else
+    /*
     nextSym();
-    if (symbol != IDENTK) serror();                                 //类型后应接标识符
-    constiden = token;
+    if (symbol != IDENTK) 
+    {
+        errmain(INVALID_IDENTITY, lineNum, token);                //类型后应接标识符
+        constiden = "$err";
+    }
+    else
+        constiden = token;
     nextSym();
-    if (symbol != ASSTK) serror();                                  //标识符后接等号
+    if (symbol != ASSTK) 
+        errmain(CONST_NOT_ASSIGNED, lineNum, constiden);           //标识符后接等号
     nextSym();
     if (consttype == INTTK)                                         //整型常量
     {
@@ -137,34 +163,67 @@ void constDef()                                                     //常量定�
         genQuaternion(CONSTOP, oprstr[(int)CHAROP], (int)constcval, constiden);
     }
     nextSym();
-    while (symbol == COMMATK)
+    */
+
+    do
     {
         nextSym();
-        if (symbol != IDENTK) serror();                                 //类型后应接标识符
-		constiden = token;
+        if (symbol != IDENTK) 
+        {
+            errmain(INVALID_IDENTITY, lineNum, token);                //类型后应接标识符
+            //非法标识符，直接跳到下一个逗号或分号
+            while (symbol != COMMATK && symbol != SEMITK)
+                nextSym();
+            continue;
+        }
+        else
+            constiden = token;
         nextSym();
-        if (symbol != ASSTK) serror();                                  //标识符后接等号
+        if (symbol != ASSTK) 
+        {
+            errmain(CONST_NOT_ASSIGNED, lineNum, constiden);           //标识符后接等号
+            //标识符未赋值（缺少赋值符号），直接跳到下一个逗号或分号
+            while (symbol != COMMATK && symbol != SEMITK)
+                nextSym();
+            continue;
+        }
         nextSym();
         if (consttype == INTTK)                                         //整型常量
         {
             constival = numericDef();
-			if (deepDbg) printf("CONST INT %s = %d\n", constiden.c_str(), constival);
+            if (symbol != UINTV && symbol != DIGV && symbol != NDIGV)
+            {   //整型常量值错误
+                errmain(INVALID_CONST_VALUE, lineNum, token);
+                while (symbol != COMMATK && symbol != SEMITK)
+                    nextSym();
+                continue;
+            }
+            if (deepDbg) printf("CONST INT %s = %d\n", constiden.c_str(), constival);
             insertTable(constiden, CONSTKD, INTTP, constival, address++, 0);
 
             genQuaternion(CONSTOP, oprstr[(int)INTOP], constival, constiden);
         }
         else
         {
+            if (symbol != CHARV)
+            {   //字符常量值错误
+                errmain(INVALID_CONST_VALUE, lineNum, token);
+                while (symbol != COMMATK && symbol != SEMITK)
+                    nextSym();
+                continue;
+            }
             constcval = token[0];
-			if (deepDbg) printf("CONST CHAR %s = '%c'\n", constiden.c_str(), constcval);
+            if (deepDbg) printf("CONST CHAR %s = '%c'\n", constiden.c_str(), constcval);
             insertTable(constiden, CONSTKD, CHARTP, (int)constcval, address++, 0);
 
             genQuaternion(CONSTOP, oprstr[(int)CHAROP], (int)constcval, constiden);
         }
         nextSym();
-    }
-    if (symbol != SEMITK) serror();
-    nextSym();
+    } while (symbol == COMMATK);
+    if (symbol != SEMITK)
+        errmain(LACK_OF_SEMICOLON, lineNum);
+    else
+        nextSym();
     if (syntaxDbg)
         printf("Line %d: This is a constant definition statement.\n", lineNum);
 }
@@ -179,8 +238,6 @@ int numericDef()                                                    //读取整�
         sign = -1;
         nextSym();
     }
-    if (symbol != UINTV && symbol != DIGV && symbol != NDIGV)
-        serror();
     val = num;
     return val * sign;
 }
@@ -188,8 +245,8 @@ int numericDef()                                                    //读取整�
 void varDec()                                                       //变量声明
 {
     varDef();
-    if (symbol != SEMITK) serror();
-    nextSym();
+    if (symbol != SEMITK) errmain(LACK_OF_SEMICOLON, lineNum);
+    else nextSym();
     if (syntaxDbg)
         printf("Line %d: This is a variable definition statement.\n", lineNum);
 }
@@ -202,21 +259,25 @@ void varDef()                                                       //变量定�
     if (symbol == LIPARTK)
     {
         nextSym();
-        if (symbol != NDIGV && symbol != UINTV) serror();   //数组长度为无符号整数
-        arrlen = num;
+        if (symbol != NDIGV && symbol != UINTV)
+            errmain(INVALID_ARRAY_LENGTH, lineNum, token);   //数组长度为无符号整数
+        else if (variden != "$err") //变量名是合法的标识符
+        {
+            arrlen = num;
 
-		if (deepDbg) printf("VAR %s ARRAY %s LEN = %d\n", symbol_type_to_str(vartype), variden.c_str(), arrlen);
+            if (deepDbg) printf("VAR %s ARRAY %s LEN = %d\n", symbol_type_to_str(vartype), variden.c_str(), arrlen);
+            
+            insertTable(variden, VARKD, vartp, 0, address, arrlen);
+            address += arrlen;
+
+            genQuaternion(VAROP, oprstr[(int)vartp+2], arrlen, variden);
+        }
         
-        insertTable(variden, VARKD, vartp, 0, address, arrlen);
-        address += arrlen;
-
-        genQuaternion(VAROP, oprstr[(int)vartp+2], arrlen, variden);
-
         nextSym();
-        if (symbol != RIPARTK) serror(); //声明后应该为右中括号，否则报错
-        nextSym();
+        if (symbol != RIPARTK) errmain(LACK_OF_RIGHT_BRACKET, lineNum); //声明后应该为右中括号，否则报错
+        else nextSym();
     }
-    else
+    else if (variden != "$err")
     {
         //非数组类型变量
 		if (deepDbg) printf("VAR %s %s\n", symbol_type_to_str(vartype), variden.c_str());
@@ -224,16 +285,29 @@ void varDef()                                                       //变量定�
 
         genQuaternion(VAROP, oprstr[(int)vartp+2], oprstr[(int)SPACEOP], variden);
     }
+
     while (symbol == COMMATK) //逗号，说明还有变量声明
     {
         nextSym();
-        if (symbol != IDENTK) serror();
+        if (symbol != IDENTK)
+        {
+            errmain(INVALID_IDENTITY, lineNum);                   //非法标识符，则报错
+            while (symbol != COMMATK && symbol != SEMITK)
+                nextSym();
+            continue;                                     //当前变量错误
+        }
         variden = token;
         nextSym();
         if (symbol == LIPARTK)
         {
             nextSym();
-            if (symbol != NDIGV && symbol != UINTV) serror();   //数组长度为无符号整数
+            if (symbol != NDIGV && symbol != UINTV)
+            {
+                errmain(INVALID_ARRAY_LENGTH, lineNum, token);   //数组长度为无符号整数
+                while (symbol != COMMATK && symbol != SEMITK)
+                    nextSym();
+                continue;  
+            }
             arrlen = num;
 
 			if (deepDbg) printf("VAR %s ARRAY %s LEN = %d\n", symbol_type_to_str(vartype), variden.c_str(), arrlen);
@@ -244,8 +318,8 @@ void varDef()                                                       //变量定�
             genQuaternion(VAROP, oprstr[(int)vartp+2], arrlen, variden);
 
             nextSym();
-            if (symbol != RIPARTK) serror(); //声明后应该为右中括号，否则报错
-            nextSym();
+            if (symbol != RIPARTK) errmain(LACK_OF_RIGHT_BRACKET, lineNum); //声明后应该为右中括号，否则报错
+            else nextSym();
         }
         else
         {
@@ -274,19 +348,20 @@ void funcDef()                                                      //函数定�
     {
         nextSym();          //向前预读一个
         paramList();
-        if (symbol != RPARTK) serror(); //参数列表应以小括号结尾
-        nextSym();
+        if (symbol != RPARTK) errmain(LACK_OF_RIGHT_PARENT, lineNum); //参数列表应以小括号结尾
+        else nextSym();
     }
-    if (symbol == LBRACETK) //左大括号，复合语句
-    {
-        nextSym();
-        compound();
-        if (symbol != RBRACETK) serror();   //复合语句应以右大括号结尾
-        nextSym();
-        if (syntaxDbg)
-            printf("Line %d: This is a function definition statement.\n", lineNum);
-    }
-    else serror();  //无左大括号，不符合文法要求
+
+    if (symbol != LBRACETK) //无左大括号，报错
+        errmain(LACK_OF_LEFT_BRACE, lineNum);
+    else nextSym();
+
+    compound();
+    if (symbol != RBRACETK) errmain(LACK_OF_RIGHT_BRACE, lineNum);   //复合语句应以右大括号结尾
+    else nextSym();
+    if (syntaxDbg)
+        printf("Line %d: This is a function definition statement.\n", lineNum);
+
     //注意：此时ret指令默认在return语句中生成，而无返回值函数可能没有return语句?
     //可以在添加endop前检查当前指令是否为return，若不是，手动添加
     checkReturnCode(inMain);
@@ -295,10 +370,11 @@ void funcDef()                                                      //函数定�
 
 void paramList()                                                    //参数列表
 {
-    if (symbol != INTTK && symbol != CHARTK) serror();  //类型标识符
+    if (symbol != INTTK && symbol != CHARTK)
+        errmain(INVALID_TYPE, lineNum, token);  //类型标识符
     vartype = symbol;
     nextSym();
-    if (symbol != IDENTK) serror();
+    if (symbol != IDENTK) errmain(INVALID_IDENTITY, lineNum, token);
     variden = token;
     nextSym();
 	if (deepDbg) printf("PARAMETER %s %s\n", symbol_type_to_str(vartype), variden.c_str());
@@ -310,10 +386,11 @@ void paramList()                                                    //参数列�
     while (symbol == COMMATK)
     {
         nextSym();
-        if (symbol != INTTK && symbol != CHARTK) serror();  //类型标识符
+        if (symbol != INTTK && symbol != CHARTK) 
+            errmain(INVALID_TYPE, lineNum, token);  //类型标识符
         vartype = symbol;
         nextSym();
-        if (symbol != IDENTK) serror();
+        if (symbol != IDENTK) errmain(INVALID_IDENTITY, lineNum, token);
         variden = token;
         nextSym();
 		if (deepDbg) printf("PARAMETER %s %s\n", symbol_type_to_str(vartype), variden.c_str());
@@ -338,8 +415,13 @@ void compound()                                                     //复合语�
         // int a, b; int b; int a[3];
         vartype = symbol;                                           //记录当前的变量类型(int or char)
         nextSym();                                                  //预读标识符
-        if (symbol != IDENTK) serror();                             //不是标识符，则报错
-        variden = token;                                          //保存标识符
+        if (symbol != IDENTK)
+        {
+            errmain(INVALID_IDENTITY, lineNum, token);             //不是标识符，则报错
+            variden = "$err";
+        }
+        else 
+            variden = token;                                          //保存标识符
         nextSym();                                                  //再预读一个
         if (symbol == COMMATK || symbol == SEMITK || symbol == LIPARTK)//逗号或分号或左中括号，变量声明
         {
@@ -357,25 +439,34 @@ void mainFunc()                                                     //主函数
     //此时已向前预读三个，读到左括号，根据文法要求，主函数main标识符后必有一对空的小括号
     address = 0;
     para = 0;
-    if (symbol != LPARTK) serror();
-    nextSym();
-    if (symbol != RPARTK) serror();
-    nextSym();
+    if (symbol != LPARTK) errmain(LACK_OF_LEFT_PARENT, lineNum);
+    
+    while (symbol != RPARTK && symbol != LBRACETK)
+        nextSym();
+    
+    if (symbol != RPARTK) errmain(LACK_OF_RIGHT_PARENT, lineNum);
+    
+    while (symbol != LBRACETK)
+        nextSym();
+
 	if (deepDbg) printf("MAIN FUNCTION\n");
     insertTable(funciden, FUNCKD, VOIDTP, 0, address++, 0);
 
     genQuaternion(FUNCOP, oprstr[(int)VOIDOP], oprstr[(int)SPACEOP], funciden);
-    if (symbol == LBRACETK) //之后是左大括号
+    if (symbol != LBRACETK) //之后是左大括号
     {
-        nextSym();
-        compound();
-        if (symbol != RBRACETK) serror();
-        nextSym();
-        if (symbol != EOFTK) serror();  //主函数后，程序结束
-        if (syntaxDbg)
-            printf("Line %d: This is a main function.\n", lineNum);
+        errmain(LACK_OF_LEFT_BRACE, lineNum);
     }
-    else serror();
+    else
+        nextSym();
+    
+    compound();
+    if (symbol != RBRACETK) errmain(LACK_OF_RIGHT_BRACE, lineNum);
+    else nextSym();
+
+    if (symbol != EOFTK) serror();  //主函数后，程序结束
+    if (syntaxDbg)
+        printf("Line %d: This is a main function.\n", lineNum);
 
     checkReturnCode(inMain);
     genQuaternion(ENDOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
@@ -411,8 +502,8 @@ void statement()                                                    //语句
         {
             nextSym();
             statementList();
-            if (symbol != RBRACETK) serror();
-            nextSym();
+            if (symbol != RBRACETK) errmain(LACK_OF_RIGHT_BRACE, lineNum);
+            else nextSym();
             break;
         }
         case(IDENTK):   //标识符，可能是函数调用或赋值语句
@@ -425,24 +516,24 @@ void statement()                                                    //语句
                 funcCall();
             else serror();
             if (symbol != SEMITK)   //简单语句应以分号结尾
-                serror();
-            nextSym();  //预读下一个字符
+                errmain(LACK_OF_SEMICOLON, lineNum);
+            else nextSym();  //预读下一个字符
             break;
         }
         case(SCANFTK):
         {
             nextSym();
             readState();
-            if (symbol != SEMITK) serror();
-            nextSym();
+            if (symbol != SEMITK) errmain(LACK_OF_SEMICOLON, lineNum);
+            else nextSym();
             break;
         }
         case(PRINTFTK):
         {
             nextSym();
             writeState();
-            if (symbol != SEMITK) serror();
-            nextSym();
+            if (symbol != SEMITK) errmain(LACK_OF_SEMICOLON, lineNum);
+            else nextSym();
             break;
         }
         case(SEMITK):
@@ -462,8 +553,8 @@ void statement()                                                    //语句
         {
             nextSym();
             returnState();
-            if (symbol != SEMITK) serror();
-            nextSym();
+            if (symbol != SEMITK) errmain(LACK_OF_SEMICOLON, lineNum);
+            else nextSym();
             break;
         }
 		default: serror();

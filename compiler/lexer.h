@@ -8,7 +8,7 @@ enum symbolSet {LBRACETK = 1, RBRACETK, IFTK, ELSETK, WHILETK, SWITCHTK, CASETK,
 				MAINTK, RETURNTK, IDENTK, CHARV, STRINGV, NDIGV, DIGV, UINTV,
 				PLUSTK, MINUSTK, STARTK, DIVTK, LPARTK, RPARTK, COMMATK, SEMITK,
 				COLONTK, ASSTK, EQUTK, GRETK, LESTK, GEQTK, LEQTK, NEQTK, LIPARTK,
-				RIPARTK, QTETK, DBQTK, UNDEF, EOFTK};
+				RIPARTK, QTETK, DBQTK, UNDEF, EOFTK, BLKTK};
 
 #define isSpace(x) ((x) == ' ')
 #define isNewline(x) ((x) == '\n')
@@ -44,6 +44,9 @@ enum symbolSet {LBRACETK = 1, RBRACETK, IFTK, ELSETK, WHILETK, SWITCHTK, CASETK,
 
 #define isQuote(x) ((x) == '\'')
 #define isDQuote(x) ((x) == '"')
+
+#define isChar(x) (isPlus((x)) || isMinus((x)) || isStar((x)) || isDivi((x)) || isLetter((x)) || isDigit((x)))
+#define isStrChar(x) ((x) == 32 || (x) == 33 || ((x) >= 35 && (x) <= 126))
 
 #define SYMBOL_CASE(x) case(x): return(#x)
 

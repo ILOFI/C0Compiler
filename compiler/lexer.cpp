@@ -1,12 +1,4 @@
-//#include "stdafx.h"
-
-#include <stdio.h>
-#include <iostream>
-#include <string>
-#include <algorithm>
-#include <stdlib.h>
-
-#include "lexer.h"
+#include "stdafx.h"
 
 using namespace std;
 
@@ -104,7 +96,8 @@ symbolSet otherChar(char x)
 
 void error()
 {
-	while ((!isBlankChar(nowchar)) && (nowchar != EOF))
+	//跳到下一个分界符(单引号，双引号，分号，逗号，空白符，EOF)
+	while ((!isQuote(nowchar)) && (!isDQuote(nowchar)) && (!isSemi(nowchar)) && (!isComma(nowchar)) && (!isBlankChar(nowchar)) && (nowchar != EOF))
 	{
 		token += nowchar;
 		nowchar = getchar();
@@ -153,21 +146,22 @@ void getSym()
 		else	//无符号整数
 		{
 			if (token[0] == '0')	//无符号整数不允许以0开头
-				error();
-			else
-			{
-				symbol = UINTV;
-				num = atoi(token.c_str());
-			}
+				errmain(UNSIGNED_DIGIT_START_WITH_0, lineNum);
+			
+			symbol = UINTV;
+			num = atoi(token.c_str());
 		}
 	}
 	else if (isQuote(nowchar))	//单引号，表字符
 	{
 		nowchar = getchar();
 		token += nowchar;
+		if (!(isPlus(nowchar) || isMinus(nowchar) || (isStar(nowchar) || isDivi(nowchar) || isLetter(nowchar) || isDigit(nowchar))))
+			errmain(INVALID_CHAR_TYPE, lineNum);
 		if ((nowchar = getchar()) != '\'')
 		{
 			token += nowchar;
+			errmain(LACK_OF_QUOTE, lineNum);
 			error();
 			return;
 		}
@@ -177,11 +171,16 @@ void getSym()
 	else if (isDQuote(nowchar))	//双引号，表示字符串
 	{
 		nowchar = getchar();
-		while (!isDQuote(nowchar))
+		while (isStrChar(nowchar))
 		{
 			token += nowchar;
 			nowchar = getchar();
 		}
+		if (!isDQuote(nowchar))		//缺少双引号，报错
+			errmain(LACK_OF_DOUBLE_QUOTE, lineNum);
+		else
+			nowchar = getchar();
+
 		symbol = STRINGV;
 	}	
 	else if (isEqu(nowchar))
@@ -235,6 +234,7 @@ void getSym()
 		nowchar = getchar();
 		if (!isEqu(nowchar))
 		{
+			errmain(INVALID_WORD, lineNum);
 			error();
 			token += nowchar;
 			return;
@@ -249,7 +249,11 @@ void getSym()
 	{
 		token += nowchar;
 		symbol = otherChar(nowchar);
-		if (symbol == UNDEF) error();
+		if (symbol == UNDEF) 
+		{
+			//errmain(INVALID_WORD, lineNum);
+			error();
+		}
 	}
 }
 

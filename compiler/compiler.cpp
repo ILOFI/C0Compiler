@@ -37,10 +37,10 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	string inpath, asmpath;
 	cout << "Extend-C0 Compiler" << endl << "Input File Path: ";
-	cin >> inpath;
+	getline(cin, inpath);
 	cout << "Input File is: " << inpath << endl;
 	cout << "MIPS result file path: ";
-	cin >> asmpath;
+	getline(cin, asmpath);
 	freopen(inpath.c_str(), "r", stdin);
 	mipsfile.open(asmpath, ios::out);
 	syntaxDbg = false;                                               //打印语法成分信息
