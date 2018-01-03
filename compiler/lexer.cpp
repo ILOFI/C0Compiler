@@ -157,12 +157,13 @@ void getSym()
 		nowchar = getchar();
 		token += nowchar;
 		if (!(isPlus(nowchar) || isMinus(nowchar) || (isStar(nowchar) || isDivi(nowchar) || isLetter(nowchar) || isDigit(nowchar))))
-			errmain(INVALID_CHAR_TYPE, lineNum);
+			errmain(INVALID_CHAR_TYPE, lineNum, token);
 		if ((nowchar = getchar()) != '\'')
 		{
-			token += nowchar;
+			//token += nowchar;
 			errmain(LACK_OF_QUOTE, lineNum);
-			error();
+			ungetc(nowchar, stdin);
+			//error();
 			return;
 		}
 		else
@@ -177,9 +178,7 @@ void getSym()
 			nowchar = getchar();
 		}
 		if (!isDQuote(nowchar))		//缺少双引号，报错
-			errmain(LACK_OF_DOUBLE_QUOTE, lineNum);
-		else
-			nowchar = getchar();
+			errmain(LACK_OF_DOUBLE_QUOTE, lineNum, token);
 
 		symbol = STRINGV;
 	}	
@@ -234,7 +233,7 @@ void getSym()
 		nowchar = getchar();
 		if (!isEqu(nowchar))
 		{
-			errmain(INVALID_WORD, lineNum);
+			//errmain(INVALID_WORD, lineNum);
 			error();
 			token += nowchar;
 			return;

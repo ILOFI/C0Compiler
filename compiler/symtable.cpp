@@ -58,7 +58,7 @@ int insertTable(string name, symkind kind, symtype type, int value, int address,
         for (int i = 1; i <= symbolTable.totSub; i++)
             if (symbolTable.item[symbolTable.subpnt[i]].name == nname)
             {   //分程序索引表指向的那个位置总是函数，只需检查对应的标识符是否重复
-                errmain();
+                errmain(DUPLICATED_DEFINE_IDENTITY, lineNum, name);
                 return -1;
             }
         //没有重复，将分程序数+1，记录对应位置的索引
@@ -70,8 +70,8 @@ int insertTable(string name, symkind kind, symtype type, int value, int address,
         for (int i = symbolTable.subpnt[symbolTable.totSub]+1; i < symbolTable.curpnt; i++)
             if (symbolTable.item[i].name == nname)
             {
-                errmain();
-				cout << "Mutiple defined item " << name << endl;
+                errmain(DUPLICATED_DEFINE_IDENTITY, lineNum, name);
+				//cout << "Mutiple defined item " << name << endl;
                 return -1;
             }
     }
