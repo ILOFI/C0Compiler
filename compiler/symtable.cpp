@@ -53,7 +53,7 @@ int insertTable(string name, symkind kind, symtype type, int value, int address,
         return -1;
     }
 
-    if (kind == FUNCKD)     //函数类符号，需要检查所有分程序，是否有重复定义的函数名
+    if (kind == FUNCKD)     //函数类符号，需要检查所有分程序和全局变量，是否有重复定义的函数名
     {
         for (int i = 1; i <= symbolTable.totSub; i++)
             if (symbolTable.item[symbolTable.subpnt[i]].name == nname)
@@ -61,6 +61,25 @@ int insertTable(string name, symkind kind, symtype type, int value, int address,
                 errmain(DUPLICATED_DEFINE_IDENTITY, lineNum, name);
                 return -1;
             }
+
+        if (symbolTable.totSub >= 1)
+        {
+            for (int i = 0; i < symbolTable.subpnt[1]; i++)
+                if (symbolTable.item[i].name == nname)
+                {
+                    errmain(DUPLICATED_DEFINE_IDENTITY, lineNum, name);
+                    return -1;
+                }
+        }
+        else
+        {
+            for (int i = 0; i < symbolTable.curpnt; i++)
+                if (symbolTable.item[i].name == nname)
+                {
+                    errmain(DUPLICATED_DEFINE_IDENTITY, lineNum, name);
+                    return -1;
+                }
+        }
         //没有重复，将分程序数+1，记录对应位置的索引
         symbolTable.subpnt[++symbolTable.totSub] = symbolTable.curpnt;
     }

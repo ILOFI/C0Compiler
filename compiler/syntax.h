@@ -58,7 +58,7 @@ void statementList();
 
 void mainFunc();
 
-string expr(enum symtype lasttp = INTTP);
+string expr(enum symtype lasttp = CHARTP);
 
 string term();
 

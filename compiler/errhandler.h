@@ -31,7 +31,7 @@ enum errType {
     LACK_OF_CASE_STATEMENT,         //缺少case子语句
     UNEXPETED_END_OF_FILE,          //文件异常结束
     LACK_OF_ASSIGN_MARK,            //缺少赋值符号
-
+    LACK_OF_ELSE_STATEMENT,         //缺少else语句段
 };
 
 const string errMsg[] = {
@@ -61,6 +61,7 @@ const string errMsg[] = {
     "LACK_OF_CASE_STATEMENT",         //缺少case子语句
     "UNEXPETED_END_OF_FILE",          //文件异常结束
     "LACK_OF_ASSIGN_MARK",            //缺少赋值符号
+    "LACK_OF_ELSE_STATEMENT",         //缺少else语句段
 };
 
 void errmain();

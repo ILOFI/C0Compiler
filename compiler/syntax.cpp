@@ -642,6 +642,8 @@ void ifState()
         nextSym();
         statement();
     }
+    else
+        errmain(LACK_OF_ELSE_STATEMENT, lineNum);
 
     genQuaternion(LABOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], label2);
     //nextSym();  //预读下一个单词
@@ -1060,7 +1062,7 @@ string factor()
     else if (symbol == CHARV)
     {
         //字符类型，在表达式中以数值参与运算
-        exprType = CHARTP;
+        //exprType = CHARTP;
         constcval = token[0];
         var1 = int_to_str((int)constcval);
         nextSym();
@@ -1069,6 +1071,7 @@ string factor()
     {
         //整数
         constival = numericDef();
+        exprType = INTTP;
         var1 = int_to_str((int)constival);
         nextSym();
     }
@@ -1091,11 +1094,13 @@ string factor()
             else if (symbolTable.item[place].len == 0) serror("Not a array of variable "+leftiden);
             else if (symbolTable.item[place].kind == CONSTKD) serror("There's no constant array "+leftiden);
             
-            if (symbolTable.item[place].type == CHARTP) exprType = CHARTP;
+            if (symbolTable.item[place].type == INTTP) exprType = INTTP;
             nextSym();
             var3 = leftiden;
             var1 = genNewVar();    //var1为最终结果
+            symtype tmp = exprType;
             var2 = expr(exprType);      //var2存放数组索引
+            exprType = tmp;
             genQuaternion(AASSOP, var3, var2, var1);   //Array assign取数组元素 =[] var1 = var3[var2]
 
             if (symbol != RIPARTK) errmain(LACK_OF_RIGHT_BRACKET, lineNum);
@@ -1108,7 +1113,7 @@ string factor()
             place = searchTable(leftiden, true);
             if (place != -1)
             {
-                if (symbolTable.item[place].type == CHARTP) exprType = CHARTP;
+                if (symbolTable.item[place].type == INTTP) exprType = INTTP;
                 if (symbolTable.item[place].type == VOIDTP) errmain(UNEXPETED_RETURN_VALUE, lineNum, leftiden);
             }
             var1 = funcCall();
@@ -1120,7 +1125,7 @@ string factor()
             //首先检查是否为函数
             if ((place = searchTable(leftiden, true)) != -1)
             {
-                if (symbolTable.item[place].type == CHARTP) exprType = CHARTP;
+                if (symbolTable.item[place].type == INTTP) exprType = INTTP;
                 if (symbolTable.item[place].type == VOIDTP) errmain(UNEXPETED_RETURN_VALUE, lineNum, leftiden);
                 var1 = funcCall();
             }
@@ -1133,7 +1138,7 @@ string factor()
                 else if (symbolTable.item[place].len > 0) serror("Invalid array usage "+leftiden); //此处不应出现数组
                 else
                 {
-                    if (symbolTable.item[place].type == CHARTP) exprType = CHARTP;
+                    if (symbolTable.item[place].type == INTTP) exprType = INTTP;
                     if (symbolTable.item[place].kind == CONSTKD)    //是常量，直接打印值
                         var1 = int_to_str(symbolTable.item[place].value);
                     else    //变量直接取变量名
