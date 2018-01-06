@@ -85,3 +85,29 @@ void checkReturnCode(bool inMain)
             genQuaternion(RETOP, oprstr[(int)SPACEOP], oprstr[(int)SPACEOP], oprstr[(int)SPACEOP]);
     }
 }
+
+void dumpQuaternionBefore()
+{
+    for (int i = 0; i < codeCnt; ++i)
+    {
+        if (midcode[i].opr == SPACEOP) continue;
+        if (midcode[i].opr == FUNCOP) midcodebefore << endl;
+        midcodebefore << oprstr[(int)midcode[i].opr] << ", " 
+                      << midcode[i].lvar << ", "
+                      << midcode[i].rvar << ", "
+                      << midcode[i].ret << endl;
+    }
+}
+
+void dumpQuaternionAfter()
+{
+    for (int i = 0; i < codeCnt; ++i)
+    {
+        if (midcode[i].opr == SPACEOP) continue;
+        if (midcode[i].opr == FUNCOP) midcodeafter << endl;
+        midcodeafter << oprstr[(int)midcode[i].opr] << ", " 
+                      << midcode[i].lvar << ", "
+                      << midcode[i].rvar << ", "
+                      << midcode[i].ret << endl;
+    }
+}

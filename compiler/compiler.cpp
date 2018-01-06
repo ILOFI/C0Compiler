@@ -22,7 +22,7 @@ char constcval;
 symTable symbolTable;
 bool symTableDbg;
 
-ofstream midcodeout;
+ofstream midcodebefore, midcodeafter;
 int codeCnt;        //中间代码条数指针
 int labelCnt;       //标签数指针
 int tvarCnt;        //临时变量个数
@@ -35,21 +35,29 @@ ofstream mipsfile;		//存放生成的汇编结果文件
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	string inpath, asmpath;
+	string inpath, asmpath, midpath;
 	cout << "Extend-C0 Compiler" << endl << "Input File Path: ";
 	getline(cin, inpath);
 	cout << "Input File is: " << inpath << endl;
 	cout << "MIPS result file path: ";
 	getline(cin, asmpath);
 	freopen(inpath.c_str(), "r", stdin);
+	midpath = inpath + ".midcode";
+	midcodebefore.open(midpath, ios::out);
+	midcodeafter.open(midpath + ".after", ios::out);
 	mipsfile.open(asmpath, ios::out);
 	syntaxDbg = false;                                               //打印语法成分信息
     deepDbg = false;                                                 //打印更详细的信息
     midcodeDbg = false;                                              //打印四元式信息
 	symTableDbg = false;											//打印符号表信息
 	syntax();
+	dumpQuaternionBefore();
+	optimize();
+	dumpQuaternionAfter();
 	genMipsCode();
 	fclose(stdin);
+	midcodebefore.close();
+	midcodeafter.close();
 	mipsfile.close();
 	cout << "MIPS result file generated!" << endl;
 	//for (int i = 0; i < constStrings.size(); i++)

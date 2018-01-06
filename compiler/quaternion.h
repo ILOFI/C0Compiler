@@ -27,7 +27,7 @@ typedef struct
 
 extern QCODE midcode[MAXCODELEN];
 
-extern ofstream midcodeout;    //中间代码输出文件
+extern ofstream midcodebefore, midcodeafter;    //中间代码输出文件
 
 extern int codeCnt;        //中间代码条数指针
 extern int labelCnt;       //标签数指针
@@ -50,5 +50,9 @@ void genQuaternion(oprSet opr, string lvar, string rvar, string ret);          /
 void genQuaternion(oprSet opr, string lvar, int rvar, string ret);             //生成一条四元式（右操作数为整型）
 
 void checkReturnCode(bool inMain);                 //检查当前是否有一条ret指令，若没有手动添加一条
+
+void dumpQuaternionBefore();       //导出四元式（优化前）
+
+void dumpQuaternionAfter();        //导出四元式（优化后）
 
 #endif
