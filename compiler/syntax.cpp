@@ -107,6 +107,8 @@ void program()                                                      //程序递�
         }
     }
 
+    if (!inMain) errmain(LACK_OF_MAIN_FUNCTION, lineNum);
+
     if (syntaxDbg)
         printf("Line %d: This is a program.\n", lineNum);
 }

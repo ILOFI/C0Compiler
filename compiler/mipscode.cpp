@@ -288,7 +288,7 @@ void prnt_code()
         mipsfile << "\tsyscall" << endl;
     }
 
-    //newline_code();
+    newline_code();
 }
 
 void ret_code()

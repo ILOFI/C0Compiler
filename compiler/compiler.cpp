@@ -32,6 +32,7 @@ vector<string> constStrings;	//存放打印语句需要的一些字符串
 
 ofstream mipsfile;		//存放生成的汇编结果文件
 
+vector<basicBlock> basicblocks;			//基本块
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -53,6 +54,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	syntax();
 	dumpQuaternionBefore();
 	optimize();
+	basicBlockPrintf(midpath + ".partition");
 	dumpQuaternionAfter();
 	genMipsCode();
 	fclose(stdin);

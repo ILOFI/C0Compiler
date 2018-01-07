@@ -13,7 +13,7 @@ void initQuaternion()
 string genNewLab()
 {
     char label[16];
-    sprintf(label, "_label_%d", labelCnt++);
+    sprintf(label, "._label_%d", labelCnt++);
     return label;
 }
 

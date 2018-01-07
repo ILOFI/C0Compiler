@@ -5,10 +5,30 @@
 
 using namespace std;
 
+typedef struct
+{
+    int id;                         //块id
+    string label;                   //块标签/函数名
+    vector<QCODE> midcodes;         //基本快内的语句序列
+    vector<int> prev, next;         //块的前驱和后继们
+} basicBlock;               //基本块
+
 extern QCODE midcode[MAXCODELEN];
+
+extern vector<basicBlock> basicblocks;			//基本块
 
 void optimize();            //优化总函数
 
 void constCombine();        //常数合并
+
+void basicBlockPartition(); //基本块划分
+
+void linktoBlock(int, int);
+
+void linktoBlock(int, string);      //连接到指定基本块并建立反向连接
+
+void basicBlockLink();      //基本块连接
+
+void basicBlockPrintf(string);
 
 #endif

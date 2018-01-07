@@ -32,6 +32,7 @@ enum errType {
     UNEXPETED_END_OF_FILE,          //文件异常结束
     LACK_OF_ASSIGN_MARK,            //缺少赋值符号
     LACK_OF_ELSE_STATEMENT,         //缺少else语句段
+    LACK_OF_MAIN_FUNCTION,          //缺少main函数或main函数不在末尾
 };
 
 const string errMsg[] = {
@@ -62,6 +63,7 @@ const string errMsg[] = {
     "UNEXPETED_END_OF_FILE",          //文件异常结束
     "LACK_OF_ASSIGN_MARK",            //缺少赋值符号
     "LACK_OF_ELSE_STATEMENT",         //缺少else语句段
+    "LACK_OF_MAIN_FUNCTION",          //缺少main函数或main函数不在末尾
 };
 
 void errmain();
