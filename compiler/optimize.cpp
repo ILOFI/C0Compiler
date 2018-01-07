@@ -6,6 +6,7 @@ void optimize()
 {
     constCombine();
     basicBlockPartition();
+    basicBlockLink();
 }
 
 void constCombine()
@@ -78,7 +79,7 @@ void basicBlockPartition()
             entry[i] = true;
 
         //紧跟在跳转语句之后的第一条语句属于入口语句
-        if (midcode[i].opr == JNEOP || midcode[i].opr == JMPOP || midcode[i].opr == CALLOP || midcode[i].opr == RETOP)
+        if (midcode[i].opr == JNEOP || midcode[i].opr == JMPOP || midcode[i].opr == RETOP)
         {
             int j = i + 1;
             while (j < codeCnt && (midcode[j].opr == SPACEOP || midcode[j].opr == ENDOP)) j++;
@@ -166,7 +167,6 @@ void basicBlockLink()
     //对每个基本块，只需看最后一条四元式(?)
     //jmp：只连接到对应的label
     //jne：连接到对应的label和下一个基本块
-    //call：连接到对应的label(函数名)，并把该函数后的所有含ret的基本块连接回去，直到第一个endop
     //ret/end：不连
     //其他：连接到下一个基本块
     for (int i = 1; i < basicblocks.size(); ++i)
@@ -178,11 +178,8 @@ void basicBlockLink()
                 case JMPOP: linktoBlock(i, basicblocks[i].midcodes[last-1].ret);
                             break;
 
-                case JNEOP: linktoBlock(i, basicblocks[i].midcodes[last-1].ret);
-                            linktoBlock(i, i+1);
-
-                case CALLOP:
-                            break;
+                case JNEOP: linktoBlock(i, i+1);
+                            linktoBlock(i, basicblocks[i].midcodes[last-1].ret);
 
                 case RETOP:
                 case ENDOP: break;
@@ -199,6 +196,18 @@ void basicBlockPrintf(string filename)
     for (int i = 0; i < basicblocks.size(); ++i)
     {
         outfile << "Basic Block " << i << ": Label = " << basicblocks[i].label << endl;
+        
+        outfile << "---------------------------------------------------------" << endl;
+        outfile << "prev block: ";
+        for (int j = 0; j < basicblocks[i].prev.size(); ++j)
+            outfile << basicblocks[i].prev[j] << " ";
+        outfile << endl;
+        outfile << "next block: ";
+        for (int j = 0; j < basicblocks[i].next.size(); ++j)
+            outfile << basicblocks[i].next[j] << " ";
+        outfile << endl;
+        outfile << "---------------------------------------------------------" << endl;
+
         for (int j = 0; j < basicblocks[i].midcodes.size(); ++j)
             outfile << oprstr[(int)basicblocks[i].midcodes[j].opr] << ", "
                     << basicblocks[i].midcodes[j].lvar << ", "
