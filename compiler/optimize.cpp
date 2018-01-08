@@ -7,6 +7,8 @@ vector<DAGNode> DAG;
 DAGNode *DAGroot;
 int DAGcnt;
 
+ofstream outfile;
+
 void optimize()
 {
     constCombine();
@@ -241,8 +243,8 @@ int findorAddItem(string name)
     node.id = DAG.size();
     node.name = name;
     node.parent.clear();
-    node.left = NULL;
-    node.right = NULL;
+    node.left = -1;
+    node.right = -1;
     DAG.push_back(node);
     return leaf.id;
 }
@@ -267,23 +269,23 @@ void findorUpdateItem(string name, int k)
 int findorAddNode(string op, int li, int ri)
 {
     for (int i = 0; i < DAG.size(); ++i)
-        if (DAG[i].name == op && (DAG[i].left != NULL && (DAG[i].left)->id == li) &&
-            (ri == -1 || (DAG[i].right != NULL && (DAG[i].right)->id == ri)))
+        if (DAG[i].name == op && (DAG[i].left != -1 && DAG[DAG[i].left].id == li) &&
+            (ri == -1 || (DAG[i].right != -1 && DAG[DAG[i].right].id == ri)))
             return DAG[i].id;
     
     DAGNode node;
     node.id = DAG.size();
     node.name = op;
     node.parent.clear();
-    node.left = &(DAG[li]);
-    node.right = ri == -1 ? NULL : &(DAG[ri]);
+    node.left = li;
+    node.right = ri;
 
     int ret = node.id;
     DAG.push_back(node);
 
-    DAG[li].parent.push_back(&(DAG[ret]));
+    DAG[li].parent.push_back(ret);
     if (ri != -1)
-        DAG[ri].parent.push_back(&(DAG[ret]));
+        DAG[ri].parent.push_back(ret);
 
     return ret;
 }
@@ -296,32 +298,34 @@ void buildDAG(vector<QCODE> midcodes)
     DAGcnt = 0;
 
     for (int i = 0; i < midcodes.size(); ++i)
-        if (midcodes[i].opr == ADDOP || midcodes[i].opr == SUBOP || midcodes[i].opr == MULOP || midcodes[i].opr == DIVOP ||
-            midcodes[i].opr == ASSOP || midcodes[i].opr == ASSAOP || midcodes[i].opr == AASSOP)
-            {
-                int li = findorAddItem(midcodes[i].lvar);
-                int ri = midcodes[i].rvar == " " ? -1 : findorAddItem(midcodes[i].rvar);
-                int k = findorAddNode(oprstrr[(int)midcodes[i].opr], li, ri);
-                findorUpdateItem(midcodes[i].ret, k);
-            }
+        if (midcodes[i].opr == ADDOP || midcodes[i].opr == SUBOP || midcodes[i].opr == MULOP || midcodes[i].opr == DIVOP)
+        {
+            int li = findorAddItem(midcodes[i].lvar);
+            int ri = (midcodes[i].rvar == " " || midcodes[i].opr == ASSAOP || midcodes[i].opr == AASSOP) ? -1 : findorAddItem(midcodes[i].rvar);
+            int k = findorAddNode(oprstr[(int)midcodes[i].opr], li, ri);
+            findorUpdateItem(midcodes[i].ret, k);
+        }
+        else if (midcodes[i].opr == ASSOP || midcodes[i].opr == ASSAOP || midcodes[i].opr == AASSOP)
+        {
+            int li = findorAddItem(midcodes[i].lvar);
+            findorUpdateItem(midcodes[i].ret, li);
+        }
 }
 
-void DAGPrintf(string filename)
+void DAGPrintf()
 {
-    ofstream outfile;
-    outfile.open(filename, ios::out);
     outfile << "------------DAG info------------" << endl;
     for (int i = 0; i < DAG.size(); ++i)
     {
         outfile << "id = " << DAG[i].id << ", name = " << DAG[i].name << endl;
         outfile << "parent :";
         for (int j = 0; j < DAG[i].parent.size(); ++j)
-            outfile << " " << DAG[i].parent[j];
+            outfile << " " << DAG[DAG[i].parent[j]].id;
         outfile << endl;
-        if (DAG[i].left != NULL)
-            outfile << "left : " << (DAG[i].left)->id << endl;
-        if (DAG[i].right != NULL)
-            outfile << "left : " << (DAG[i].right)->id << endl;
+        if (DAG[i].left != -1)
+            outfile << "left : " << DAG[DAG[i].left].id << endl;
+        if (DAG[i].right != -1)
+            outfile << "right : " << DAG[DAG[i].right].id << endl;
         outfile << endl;
     }
     outfile << "------------DAG end-------------" << endl;
@@ -330,5 +334,62 @@ void DAGPrintf(string filename)
     for (int i = 0; i < nodelist.size(); ++i)
         outfile << nodelist[i].name << "\t" << nodelist[i].id << "\t" << nodelist[i].init << endl;
     outfile << "nodelist end" << endl;
+    outfile << endl;
+}
+
+vector<QCODE> DAGExport()
+{
+    //从DAG图中导出代码
+    
+}
+
+void DAGOptimize(string filename)
+{
+    outfile.open(filename, ios::out);
+
+    //遍历每个基本块，找到待优化的中间代码，生成DAG图，
+    //之后从DAG图中导出对应代码，插入至原来的位置
+    for (int i = 0; i < basicblocks.size(); ++i)
+    {
+        //如何找到需要优化的中间代码?
+        //有连续的(四条及以上)表达式计算
+        if (basicblocks[i].midcodes.size() < 4) continue;
+        vector<QCODE>::iterator istart, iend;
+        vector<QCODE> optcodes;
+        int now = 0;
+        for (vector<QCODE>::iterator iter = basicblocks[i].midcodes.begin(); iter != basicblocks[i].midcodes.end(); iter++)
+            if (isExprOp(iter->opr))
+            {
+                if (now == 0)
+                {
+                    istart = iter;
+                    optcodes.clear();
+                }
+                optcodes.push_back(*iter);
+                now++;
+            }
+            else
+            {
+                if (now >= 4)
+                {
+                    iend = iter;
+                    buildDAG(optcodes);
+                    DAGPrintf();
+                    //todo: 删除已有代码，从DAG中导出代码，插入到istart位置
+
+                }
+                now = 0;
+            }
+            
+        if (now >= 4)
+            {
+                iend = basicblocks[i].midcodes.end();
+                buildDAG(optcodes);
+                DAGPrintf();
+                //todo: 删除已有代码，从DAG中导出代码，插入到istart位置
+
+            }
+    }
+
     outfile.close();
 }

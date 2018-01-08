@@ -3,6 +3,8 @@
 
 #include <string>
 
+#define isExprOp(x) ((x) == ADDOP || (x) == SUBOP || (x) == MULOP || (x) == DIVOP || (x) == ASSOP || (x) == ASSAOP || (x) == AASSOP)
+
 using namespace std;
 
 typedef struct
@@ -17,8 +19,8 @@ struct DAGNODE
 {
     int id;
     string name;
-    vector<struct DAGNODE *> parent;
-    struct DAGNODE *left, *right;
+    vector<int> parent;
+    int left, right;
 };
 
 typedef struct DAGNODE DAGNode;
@@ -50,6 +52,8 @@ void basicBlockPrintf(string);
 
 void buildDAG(vector<QCODE>);       //根据四元式序列生成DAG图
 
-void DAGPrintf(string);
+void DAGPrintf();
+
+void DAGOptimize(string filename = " ");
 
 #endif
