@@ -7,6 +7,8 @@ vector<DAGNode> DAG;
 DAGNode *DAGroot;
 int DAGcnt;
 
+set<int> remain;            //还未加入队列的中间结点
+
 ofstream outfile;
 
 void optimize()
@@ -298,14 +300,14 @@ void buildDAG(vector<QCODE> midcodes)
     DAGcnt = 0;
 
     for (int i = 0; i < midcodes.size(); ++i)
-        if (midcodes[i].opr == ADDOP || midcodes[i].opr == SUBOP || midcodes[i].opr == MULOP || midcodes[i].opr == DIVOP)
+        if (midcodes[i].opr == ADDOP || midcodes[i].opr == SUBOP || midcodes[i].opr == MULOP || midcodes[i].opr == DIVOP || midcodes[i].opr == AASSOP)
         {
             int li = findorAddItem(midcodes[i].lvar);
-            int ri = (midcodes[i].rvar == " " || midcodes[i].opr == ASSAOP || midcodes[i].opr == AASSOP) ? -1 : findorAddItem(midcodes[i].rvar);
+            int ri = (midcodes[i].rvar == " ") ? -1 : findorAddItem(midcodes[i].rvar);
             int k = findorAddNode(oprstr[(int)midcodes[i].opr], li, ri);
             findorUpdateItem(midcodes[i].ret, k);
         }
-        else if (midcodes[i].opr == ASSOP || midcodes[i].opr == ASSAOP || midcodes[i].opr == AASSOP)
+        else if (midcodes[i].opr == ASSOP)
         {
             int li = findorAddItem(midcodes[i].lvar);
             findorUpdateItem(midcodes[i].ret, li);
@@ -330,17 +332,61 @@ void DAGPrintf()
     }
     outfile << "------------DAG end-------------" << endl;
     outfile << "Nodelist: " << endl;
-    outfile << "name\t\tid\t\tinit" << endl;
+    outfile << "name\tid\tinit" << endl;
     for (int i = 0; i < nodelist.size(); ++i)
         outfile << nodelist[i].name << "\t" << nodelist[i].id << "\t" << nodelist[i].init << endl;
     outfile << "nodelist end" << endl;
     outfile << endl;
 }
 
+bool DAGSatisfy(int choose)
+{
+    for (int i = 0; i < DAG[choose].parent.size(); ++i)
+        if (remain.find((int)(DAG[choose].parent[i])) != remain.end())
+            return false;
+    
+    return true;
+}
+
 vector<QCODE> DAGExport()
 {
     //从DAG图中导出代码
-    
+    vector<QCODE> ret;
+    ret.clear();
+
+    vector<int> queue;          //放置中间结点的队列
+    queue.clear();
+    remain.clear();
+
+    for (int i = 0; i < nodelist.size(); ++i)
+        if (!isInt(nodelist[i].name[0]))
+            remain.insert((int)(nodelist[i].id));
+
+    while (remain.size() > 0)
+    {
+        //还有中间结点未进入队列
+        int choose;
+        for (set<int>::reverse_iterator iter = remain.rbegin(); iter != remain.rend(); iter++)
+        {
+            choose = *iter;
+            if (DAGSatisfy(choose)) break;
+        }
+        
+        do
+        {
+            remain.erase(choose);
+            queue.push_back(choose);
+            choose = DAG[choose].left;
+        } while (choose != -1 && DAGSatisfy(choose));
+    }
+
+    cout << "Node Compute path: ";
+    for (vector<int>::reverse_iterator iter = queue.rbegin(); iter != queue.rend(); iter++)
+        cout << *iter << " ";
+
+    cout << endl;
+
+    return ret;
 }
 
 void DAGOptimize(string filename)
@@ -377,6 +423,7 @@ void DAGOptimize(string filename)
                     DAGPrintf();
                     //todo: 删除已有代码，从DAG中导出代码，插入到istart位置
 
+                    vector<QCODE> after = DAGExport();
                 }
                 now = 0;
             }
@@ -387,6 +434,8 @@ void DAGOptimize(string filename)
                 buildDAG(optcodes);
                 DAGPrintf();
                 //todo: 删除已有代码，从DAG中导出代码，插入到istart位置
+
+                vector<QCODE> after = DAGExport();
 
             }
     }

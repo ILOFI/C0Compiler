@@ -3,7 +3,7 @@
 
 #include <string>
 
-#define isExprOp(x) ((x) == ADDOP || (x) == SUBOP || (x) == MULOP || (x) == DIVOP || (x) == ASSOP || (x) == ASSAOP || (x) == AASSOP)
+#define isExprOp(x) ((x) == ADDOP || (x) == SUBOP || (x) == MULOP || (x) == DIVOP || (x) == ASSOP || (x) == AASSOP)
 
 using namespace std;
 
