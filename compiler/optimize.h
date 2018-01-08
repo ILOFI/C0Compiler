@@ -13,6 +13,23 @@ typedef struct
     vector<int> prev, next;         //块的前驱和后继们
 } basicBlock;               //基本块
 
+struct DAGNODE
+{
+    int id;
+    string name;
+    vector<struct DAGNODE *> parent;
+    struct DAGNODE *left, *right;
+};
+
+typedef struct DAGNODE DAGNode;
+
+typedef struct
+{
+    string name;
+    int id;
+    bool init;
+} DAGItem;
+
 extern QCODE midcode[MAXCODELEN];
 
 extern vector<basicBlock> basicblocks;			//基本块
@@ -30,5 +47,9 @@ void linktoBlock(int, string);      //连接到指定基本块并建立反向连
 void basicBlockLink();      //基本块连接
 
 void basicBlockPrintf(string);
+
+void buildDAG(vector<QCODE>);       //根据四元式序列生成DAG图
+
+void DAGPrintf(string);
 
 #endif

@@ -1,6 +1,11 @@
 #include "stdafx.h"
 
 using namespace std;
+    
+vector<DAGItem> nodelist;
+vector<DAGNode> DAG;
+DAGNode *DAGroot;
+int DAGcnt;
 
 void optimize()
 {
@@ -216,5 +221,114 @@ void basicBlockPrintf(string filename)
 
         outfile << endl;
     }
+    outfile.close();
+}
+
+int findorAddItem(string name)
+{
+    for (int i = 0; i < nodelist.size(); ++i)
+        if (nodelist[i].name == name)
+            return nodelist[i].id;
+    
+    DAGItem leaf;
+    leaf.id = DAG.size();
+    leaf.name = name;
+    if (!isInt(name[0])) leaf.init = true;
+    else leaf.init = false;
+    nodelist.push_back(leaf);
+
+    DAGNode node;
+    node.id = DAG.size();
+    node.name = name;
+    node.parent.clear();
+    node.left = NULL;
+    node.right = NULL;
+    DAG.push_back(node);
+    return leaf.id;
+}
+
+void findorUpdateItem(string name, int k)
+{
+    for (int i = 0; i < nodelist.size(); ++i)
+        if (nodelist[i].name == name)
+        {
+            nodelist[i].id = k;
+            nodelist[i].init = false;
+            return;
+        }
+
+    DAGItem leaf;
+    leaf.id = k;
+    leaf.name = name;
+    leaf.init = false;
+    nodelist.push_back(leaf);
+}
+
+int findorAddNode(string op, int li, int ri)
+{
+    for (int i = 0; i < DAG.size(); ++i)
+        if (DAG[i].name == op && (DAG[i].left != NULL && (DAG[i].left)->id == li) &&
+            (ri == -1 || (DAG[i].right != NULL && (DAG[i].right)->id == ri)))
+            return DAG[i].id;
+    
+    DAGNode node;
+    node.id = DAG.size();
+    node.name = op;
+    node.parent.clear();
+    node.left = &(DAG[li]);
+    node.right = ri == -1 ? NULL : &(DAG[ri]);
+
+    int ret = node.id;
+    DAG.push_back(node);
+
+    DAG[li].parent.push_back(&(DAG[ret]));
+    if (ri != -1)
+        DAG[ri].parent.push_back(&(DAG[ret]));
+
+    return ret;
+}
+
+void buildDAG(vector<QCODE> midcodes)
+{
+    DAGroot = NULL;
+    DAG.clear();
+    nodelist.clear();
+    DAGcnt = 0;
+
+    for (int i = 0; i < midcodes.size(); ++i)
+        if (midcodes[i].opr == ADDOP || midcodes[i].opr == SUBOP || midcodes[i].opr == MULOP || midcodes[i].opr == DIVOP ||
+            midcodes[i].opr == ASSOP || midcodes[i].opr == ASSAOP || midcodes[i].opr == AASSOP)
+            {
+                int li = findorAddItem(midcodes[i].lvar);
+                int ri = midcodes[i].rvar == " " ? -1 : findorAddItem(midcodes[i].rvar);
+                int k = findorAddNode(oprstrr[(int)midcodes[i].opr], li, ri);
+                findorUpdateItem(midcodes[i].ret, k);
+            }
+}
+
+void DAGPrintf(string filename)
+{
+    ofstream outfile;
+    outfile.open(filename, ios::out);
+    outfile << "------------DAG info------------" << endl;
+    for (int i = 0; i < DAG.size(); ++i)
+    {
+        outfile << "id = " << DAG[i].id << ", name = " << DAG[i].name << endl;
+        outfile << "parent :";
+        for (int j = 0; j < DAG[i].parent.size(); ++j)
+            outfile << " " << DAG[i].parent[j];
+        outfile << endl;
+        if (DAG[i].left != NULL)
+            outfile << "left : " << (DAG[i].left)->id << endl;
+        if (DAG[i].right != NULL)
+            outfile << "left : " << (DAG[i].right)->id << endl;
+        outfile << endl;
+    }
+    outfile << "------------DAG end-------------" << endl;
+    outfile << "Nodelist: " << endl;
+    outfile << "name\t\tid\t\tinit" << endl;
+    for (int i = 0; i < nodelist.size(); ++i)
+        outfile << nodelist[i].name << "\t" << nodelist[i].id << "\t" << nodelist[i].init << endl;
+    outfile << "nodelist end" << endl;
     outfile.close();
 }
