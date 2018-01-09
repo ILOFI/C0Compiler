@@ -16,8 +16,8 @@ vector<pair<string, int> > refcounter;      //引用计数器
 void optimize()
 {
     constCombine();
-    basicBlockPartition();
-    basicBlockLink();
+    //basicBlockPartition();
+    //basicBlockLink();
 }
 
 void copyBroadcast(int start, string find, string replace)
@@ -557,12 +557,12 @@ void DAGOptimize(string filename)
             if (now >= 4)
             {
                 iend = i;
-                printCode(optcodes, "code to opt");
+                //printCode(optcodes, "code to opt");
                 buildDAG(optcodes);
                 DAGPrintf();
 
                 vector<QCODE> after = DAGExport();
-                printCode(after, "code after opt");
+                //printCode(after, "code after opt");
                 for (int j = 0; j < after.size(); ++j)
                     midcodeopt.push_back(after[j]);
             }
@@ -604,7 +604,7 @@ void updateCount(string name)
             return ;
         }
     
-    refcounter.push_back(make_pair(name, 1));
+    //refcounter.push_back(make_pair(name, 1));
 }
 
 bool isIden(string ttoken)
@@ -630,6 +630,7 @@ bool isIden(string ttoken)
 
 void refCount()
 {
+    //全局变量暂不操作
     int i = 0, istart = -1;
     while (i < codeCnt)
     {
@@ -639,6 +640,9 @@ void refCount()
             istart = ++i;
             while (i < codeCnt && midcode[i].opr != ENDOP)
             {
+                if (midcode[i].opr == VAROP || midcode[i].opr == PARAOP)
+                    if (midcode[i].rvar == " ")
+                        refcounter.push_back(make_pair(midcode[i].ret, 0));
                 if (midcode[i].opr != VAROP && midcode[i].opr != CONSTOP)
                 {
                     if (midcode[i].opr != AASSOP && midcode[i].opr != CALLOP)

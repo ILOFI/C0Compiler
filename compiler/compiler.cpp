@@ -54,8 +54,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	symTableDbg = false;											//打印符号表信息
 	syntax();
 	dumpQuaternionBefore();
+	genMipsCode();
+	mipsfile.close();
+	mipsfile.open(asmpath + ".after", ios::out);
 	optimize();
-	basicBlockPrintf(midpath + ".partition");
+	//basicBlockPrintf(midpath + ".partition");
 	DAGOptimize(midpath + ".dag");
 	refCount();
 	dumpQuaternionAfter();
