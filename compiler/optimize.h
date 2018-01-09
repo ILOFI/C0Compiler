@@ -5,6 +5,8 @@
 
 #define isExprOp(x) ((x) == ADDOP || (x) == SUBOP || (x) == MULOP || (x) == DIVOP || (x) == ASSOP || (x) == AASSOP)
 
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+
 using namespace std;
 
 typedef struct
@@ -40,6 +42,10 @@ extern vector<QCODE> midcodeopt;				//优化后的四元式
 
 void optimize();            //优化总函数
 
+void copyBroadcast(int start, string find, string replace);
+
+void printCode(vector<QCODE> code, string tip);
+
 void constCombine();        //常数合并
 
 void basicBlockPartition(); //基本块划分
@@ -52,10 +58,22 @@ void basicBlockLink();      //基本块连接
 
 void basicBlockPrintf(string);
 
+int findorAddItem(string name);
+
+void findorUpdateItem(string name, int k);
+
+int findorAddNode(string op, int li, int ri);
+
 void buildDAG(vector<QCODE>);       //根据四元式序列生成DAG图
 
 void DAGPrintf();
 
+bool DAGSatisfy(int choose);
+
+vector<QCODE> DAGExport();
+
 void DAGOptimize(string filename = " ");
+
+void refCount();    //引用计数
 
 #endif

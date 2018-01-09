@@ -11,6 +11,8 @@ set<int> remain;            //还未加入队列的中间结点
 
 ofstream outfile;
 
+vector<pair<string, int> > refcounter;      //引用计数器
+
 void optimize()
 {
     constCombine();
@@ -26,6 +28,17 @@ void copyBroadcast(int start, string find, string replace)
         if (midcode[i].rvar == find) midcode[i].rvar = replace;
         if (midcode[i].ret == find) midcode[i].ret = replace;
     }
+}
+
+void copyBroadcast(int start, int end, string find, string replace)
+{
+    for (int i = start; i < end; ++i)
+        if (midcode[i].opr != CONSTOP)
+        {
+            if (midcode[i].lvar == find) midcode[i].lvar = replace;
+            if (midcode[i].rvar == find) midcode[i].rvar = replace;
+            if (midcode[i].ret == find) midcode[i].ret = replace;
+        }
 }
 
 void printCode(vector<QCODE> code, string tip)
@@ -575,4 +588,72 @@ void DAGOptimize(string filename)
     }
 
     outfile.close();
+}
+
+int mycmp(pair<string, int> &p1, pair<string, int> &p2)
+{
+	return p1.second > p2.second;
+}
+
+void updateCount(string name)
+{
+    for (int i = 0; i < refcounter.size(); ++i)
+        if (refcounter[i].first == name)
+        {
+            refcounter[i].second += 1;
+            return ;
+        }
+    
+    refcounter.push_back(make_pair(name, 1));
+}
+
+bool isIden(string ttoken)
+{
+    if (isInt(ttoken[0])) return false;
+    if (!isLetter(ttoken[0])) return false;
+    if (ttoken == "if") return false;
+	if (ttoken == "else") return false;
+	if (ttoken == "while") return false;
+	if (ttoken == "switch") return false;
+	if (ttoken == "case") return false;
+	if (ttoken == "default") return false;
+	if (ttoken == "scanf") return false;
+	if (ttoken == "printf") return false;
+	if (ttoken == "int") return false;
+	if (ttoken == "char") return false;
+	if (ttoken == "const") return false;
+	if (ttoken == "void") return false;
+	if (ttoken == "main") return false;
+	if (ttoken == "return") return false;
+    return true;
+}
+
+void refCount()
+{
+    int i = 0, istart = -1;
+    while (i < codeCnt)
+    {
+        if (midcode[i].opr == FUNCOP)
+        {
+            refcounter.clear();
+            istart = ++i;
+            while (i < codeCnt && midcode[i].opr != ENDOP)
+            {
+                if (midcode[i].opr != VAROP && midcode[i].opr != CONSTOP)
+                {
+                    if (midcode[i].opr != AASSOP && midcode[i].opr != CALLOP)
+                        if (isTempVal(midcode[i].lvar) || isIden(midcode[i].lvar)) updateCount(midcode[i].lvar);
+                    if (isTempVal(midcode[i].rvar) || isIden(midcode[i].rvar)) updateCount(midcode[i].rvar);
+                    if (midcode[i].opr != ASSAOP)
+                        if (isTempVal(midcode[i].ret) || isIden(midcode[i].ret)) updateCount(midcode[i].ret);
+                }
+                ++i;
+            }
+            iend = i;
+            sort(refcounter.begin(), refcounter.end(), mycmp);
+            for (int j = 0; j < MIN(15, refcounter.size()); ++j)
+                copyBroadcast(istart, iend, refcounter[j].first, "$"+int_to_str(j+11));
+        }
+        ++i;
+    }
 }

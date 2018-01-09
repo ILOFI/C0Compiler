@@ -231,10 +231,10 @@ void func_code()
     lab_code();     //当前函数label
     //进入函数
     //新的活动记录
-    //$sp以下位置为新的函数活动记录，0位存prev $fp，-4位存prev $ra，-8位以下存函数参数和局部变量
+    //$sp以下位置为新的函数活动记录，0位存prev $fp，-4位存prev $ra，-68位以下存函数参数和局部变量
     mipsfile << "\tmove\t$fp\t$sp" << endl;   //fp为当前sp地址
-    mipsfile << "\tsub\t$sp\t$sp\t8" << endl;
-    offset = 8;
+    mipsfile << "\tsub\t$sp\t$sp\t68" << endl;
+    offset = 68;
     localvar.clear();   //清空临时变量表
 }
 
@@ -288,7 +288,7 @@ void prnt_code()
         mipsfile << "\tsyscall" << endl;
     }
 
-    newline_code();
+    //newline_code();
 }
 
 void ret_code()
@@ -317,6 +317,9 @@ void ret_code()
     mipsfile << "\tlw\t$fp\t($fp)" << endl;
     mipsfile << "\tmove\t$t0\t$ra" << endl;
     mipsfile << "\tlw\t$ra\t-4($sp)" << endl;
+    for (int i = 0; i < 15; ++i)
+        mipsfile << "\tlw\t$" << i+11 << "\t" << -8-4*i << "($sp)" << endl;
+
 
     mipsfile << "\tjr\t$t0" << endl;
     mipsfile << "\tnop" << endl;
@@ -355,8 +358,8 @@ void parav_code()
     }
 
     //直接将参数值存入栈的对应位置
-    //此时函数call尚未发生，$sp以下位置为新的函数活动记录，0位存prev $fp，-4位存prev $ra，因此函数参数从-8位开始
-    mipsfile << "\tsw\t$t0" << -4*paravcnt-8 << "($sp)" << endl;
+    //此时函数call尚未发生，$sp以下位置为新的函数活动记录，0位存prev $fp，-4位存prev $ra，因此函数参数从-68位开始
+    mipsfile << "\tsw\t$t0" << -4*paravcnt-68 << "($sp)" << endl;
     paravcnt++;
 }
 
@@ -365,9 +368,12 @@ void call_code()
     //call, <funcname>, , [<return variden>]
 
     mipsfile << "\tsub\t$sp\t$fp\t" << offset << endl;
-    //$sp以下位置为新的函数活动记录，0位存prev $fp，-4位存prev $ra，-8位以下存函数参数
+    //$sp以下位置为新的函数活动记录，0位存prev $fp，-4位存prev $ra，-8位以下存11-25号寄存器，
+    //-68位以下存函数参数和局部变量
     mipsfile << "\tsw\t$fp\t($sp)" << endl;
     mipsfile << "\tsw\t$ra\t-4($sp)" << endl;
+    for (int i = 0; i < 15; ++i)
+        mipsfile << "\tsw\t$" << i+11 << "\t" << -8-4*i << "($sp)" << endl;
 
     mipsfile << "\tjal\t" << midcode[codepnt].lvar << endl;
     mipsfile << "\tnop" << endl;  //延迟槽

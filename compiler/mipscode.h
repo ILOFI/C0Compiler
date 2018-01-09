@@ -14,7 +14,9 @@ extern int codeCnt;        //中间代码条数指针
 #define isInt(x) (((x) >= '0' && (x) <= '9') || ((x) == '-'))   //判断x是否是整数的开头
 #define isUint(x) ((x) >= '0' && (x) <= '9')   //判断x是否是无符号整数的开头
 
-#define isTempVal(x) ((x)[0] == '$')        //判断x是否为中间代码临时变量
+#define isTempVal(x) ((x)[0] == '$' && (x)[1] == '*')        //判断x是否为中间代码临时变量
+
+#define isReg(x) ((x)[0] == '$' && isUint((x)[1]))
 
 typedef struct
 {

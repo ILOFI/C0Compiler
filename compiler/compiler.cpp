@@ -57,6 +57,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	optimize();
 	basicBlockPrintf(midpath + ".partition");
 	DAGOptimize(midpath + ".dag");
+	refCount();
 	dumpQuaternionAfter();
 	genMipsCode();
 	fclose(stdin);
