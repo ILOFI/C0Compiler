@@ -3,7 +3,7 @@
 
 #include <string>
 
-#define MAXCODELEN 1024
+#define MAXCODELEN 4096
 
 using namespace std;
 

@@ -5,7 +5,7 @@ using namespace std;
 vector<DAGItem> nodelist;
 vector<DAGNode> DAG;
 DAGNode *DAGroot;
-int DAGcnt;
+int DAGcnt, istart, iend;
 
 set<int> remain;            //还未加入队列的中间结点
 
@@ -16,6 +16,28 @@ void optimize()
     constCombine();
     basicBlockPartition();
     basicBlockLink();
+}
+
+void copyBroadcast(int start, string find, string replace)
+{
+    for (int i = start; i < codeCnt; ++i)
+    {
+        if (midcode[i].lvar == find) midcode[i].lvar = replace;
+        if (midcode[i].rvar == find) midcode[i].rvar = replace;
+        if (midcode[i].ret == find) midcode[i].ret = replace;
+    }
+}
+
+void printCode(vector<QCODE> code, string tip)
+{
+    cout << tip << " start:" << endl;
+    for (int i = 0; i < code.size(); ++i)
+        cout << oprstr[(int)code[i].opr] << ", "
+             << code[i].lvar << ", "
+             << code[i].rvar << ", "
+             << code[i].ret << endl;
+    cout << tip << " end." << endl;
+    cout << endl;
 }
 
 void constCombine()
@@ -386,58 +408,170 @@ vector<QCODE> DAGExport()
 
     cout << endl;
 
+    vector<set<string> > nodenames;             //每个结点对应的变量
+    vector<string> tmpval;                      //每个结点对应的中间变量（0个或1个）
+    for (int i = 0; i < DAG.size(); ++i)
+    {
+        set<string> tmp;
+        tmp.clear();
+        nodenames.push_back(tmp);
+    }
+
+    for (int i = 0; i < nodelist.size(); ++i)
+        if (!isInt(nodelist[i].name[0]))
+            if (!(nodelist[i].init))
+                nodenames[nodelist[i].id].insert(nodelist[i].name);
+
+    for (int i = 0; i < DAG.size(); ++i)
+    {
+        string tval = " ";
+        for (set<string>::iterator it = nodenames[i].begin(); it != nodenames[i].end(); ++it)
+            if (isTempVal(*it))
+            {
+                tval = *it;
+                break;
+            }
+        
+        if (tval != " ")        //至少有一个局部变量，需要判断是否有其他局部变量，进行替换与后向传播
+            for (set<string>::iterator it = nodenames[i].begin(); it != nodenames[i].end(); )
+                if (isTempVal(*it) && ((*it) != tval))
+                {
+                    //此时*it需要被替换为tval
+                    string todrop = *it;
+                    //遍历DAG图中的其他结点，看是否有todrop，若有，删除并添加tval
+                    for (int k = 0; k < DAG.size(); ++k)
+                        if (k != i && nodenames[k].find(todrop) != nodenames[k].end())
+                        {
+                            nodenames[k].erase(todrop);
+                            nodenames[k].insert(tval);
+                        }
+                    //遍历后面中间代码，进行复制传播
+                    copyBroadcast(iend, todrop, tval);
+                    nodenames[i].erase(it++);
+                }
+                else it++;
+
+        tmpval.push_back(tval);
+    }
+
+    //按照队列逆序中的每个点，输出中间代码
+    for (vector<int>::reverse_iterator iter = queue.rbegin(); iter != queue.rend(); iter++)
+        if (nodenames[*iter].size() > 0)
+        {
+            //先取得结点的标记
+            oprSet codeop;
+            if (DAG[*iter].name == oprstr[(int)ADDOP]) codeop = ADDOP;
+            else if (DAG[*iter].name == oprstr[(int)SUBOP]) codeop = SUBOP;
+            else if (DAG[*iter].name == oprstr[(int)MULOP]) codeop = MULOP;
+            else if (DAG[*iter].name == oprstr[(int)DIVOP]) codeop = DIVOP;
+            else if (DAG[*iter].name == oprstr[(int)AASSOP]) codeop = AASSOP;
+            else codeop = ASSOP;
+            string target = " ";
+            for (set<string>::iterator it = nodenames[*iter].begin(); it != nodenames[*iter].end(); it++)
+            {
+                QCODE tmpcode;
+                if (target == " ")
+                {
+                    tmpcode.opr = codeop;
+                    //left child
+                    if (DAG[*iter].left == -1)
+                    {
+                        cout << "Warning: left child missing at node " << *iter << endl;
+                        tmpcode.lvar = DAG[*iter].name;
+                    }
+                    else if (nodenames[DAG[*iter].left].size() == 0)
+                        tmpcode.lvar = DAG[DAG[*iter].left].name;
+                    else
+                    {
+                        set<string>::iterator titer = nodenames[DAG[*iter].left].begin();
+                        tmpcode.lvar = *titer;
+                    }
+                    //right child
+                    if (DAG[*iter].right == -1)
+                    {
+                        cout << "Warning: right child missing at node " << *iter << endl;
+                        tmpcode.rvar = " ";
+                    }
+                    else if (nodenames[DAG[*iter].right].size() == 0)
+                        tmpcode.rvar = DAG[DAG[*iter].right].name;
+                    else
+                    {
+                        set<string>::iterator titer = nodenames[DAG[*iter].right].begin();
+                        tmpcode.rvar = *titer;
+                    }
+                    //ret
+                    tmpcode.ret = *it;
+                    target = *it;
+                }
+                else
+                {
+                    tmpcode.opr = ASSOP;
+                    tmpcode.lvar = target;
+                    tmpcode.rvar = " ";
+                    tmpcode.ret = *it;
+                }
+                ret.push_back(tmpcode);
+            }
+        }
+            
     return ret;
 }
 
 void DAGOptimize(string filename)
 {
+    midcodeopt.clear();
     outfile.open(filename, ios::out);
 
-    //遍历每个基本块，找到待优化的中间代码，生成DAG图，
+    //遍历每条中间代码，找到待优化的中间代码，生成DAG图，
     //之后从DAG图中导出对应代码，插入至原来的位置
-    for (int i = 0; i < basicblocks.size(); ++i)
+    int now = 0;
+    vector<QCODE> optcodes;
+    for (int i = 0; i < codeCnt; i++)
     {
-        //如何找到需要优化的中间代码?
-        //有连续的(四条及以上)表达式计算
-        if (basicblocks[i].midcodes.size() < 4) continue;
-        vector<QCODE>::iterator istart, iend;
-        vector<QCODE> optcodes;
-        int now = 0;
-        for (vector<QCODE>::iterator iter = basicblocks[i].midcodes.begin(); iter != basicblocks[i].midcodes.end(); iter++)
-            if (isExprOp(iter->opr))
+        if (midcode[i].opr == SPACEOP) continue;
+        if (isExprOp(midcode[i].opr))
+        {
+            if (now == 0)
             {
-                if (now == 0)
-                {
-                    istart = iter;
-                    optcodes.clear();
-                }
-                optcodes.push_back(*iter);
-                now++;
+                istart = i;
+                optcodes.clear();
+            }
+            optcodes.push_back(midcode[i]);
+            now++;
+        }
+        else
+        {
+            if (now >= 4)
+            {
+                iend = i;
+                printCode(optcodes, "code to opt");
+                buildDAG(optcodes);
+                DAGPrintf();
+
+                vector<QCODE> after = DAGExport();
+                printCode(after, "code after opt");
+                for (int j = 0; j < after.size(); ++j)
+                    midcodeopt.push_back(after[j]);
             }
             else
             {
-                if (now >= 4)
-                {
-                    iend = iter;
-                    buildDAG(optcodes);
-                    DAGPrintf();
-                    //todo: 删除已有代码，从DAG中导出代码，插入到istart位置
-
-                    vector<QCODE> after = DAGExport();
-                }
-                now = 0;
+                for (int j = 0; j < optcodes.size(); ++j)
+                    midcodeopt.push_back(optcodes[j]);
             }
-            
-        if (now >= 4)
-            {
-                iend = basicblocks[i].midcodes.end();
-                buildDAG(optcodes);
-                DAGPrintf();
-                //todo: 删除已有代码，从DAG中导出代码，插入到istart位置
+            midcodeopt.push_back(midcode[i]);
+            now = 0;
+            optcodes.clear();
+        }
+    }
 
-                vector<QCODE> after = DAGExport();
-
-            }
+    //将优化后的代码覆盖至原数组
+    codeCnt = midcodeopt.size();
+    for (int i = 0; i < codeCnt; ++i)
+    {
+        midcode[i].opr = midcodeopt[i].opr;
+        midcode[i].lvar = midcodeopt[i].lvar;
+        midcode[i].rvar = midcodeopt[i].rvar;
+        midcode[i].ret = midcodeopt[i].ret;
     }
 
     outfile.close();

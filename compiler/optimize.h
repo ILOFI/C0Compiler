@@ -36,6 +36,8 @@ extern QCODE midcode[MAXCODELEN];
 
 extern vector<basicBlock> basicblocks;			//基本块
 
+extern vector<QCODE> midcodeopt;				//优化后的四元式
+
 void optimize();            //优化总函数
 
 void constCombine();        //常数合并
