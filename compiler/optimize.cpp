@@ -171,7 +171,7 @@ void basicBlockPartition()
 
                     if (midcode[j].opr == FUNCOP || midcode[j].opr == LABOP)
                     {
-                        if (bb.label != "$NULL") cout << "Warning: multiple label in a basic block." << endl;
+                        //if (bb.label != "$NULL") cout << "Warning: multiple label in a basic block." << endl;
                         bb.label = midcode[j].ret;
                     }
                 }
@@ -415,11 +415,13 @@ vector<QCODE> DAGExport()
         } while (choose != -1 && DAGSatisfy(choose));
     }
 
+/*
     cout << "Node Compute path: ";
     for (vector<int>::reverse_iterator iter = queue.rbegin(); iter != queue.rend(); iter++)
         cout << *iter << " ";
 
     cout << endl;
+*/
 
     vector<set<string> > nodenames;             //每个结点对应的变量
     vector<string> tmpval;                      //每个结点对应的中间变量（0个或1个）
@@ -489,7 +491,7 @@ vector<QCODE> DAGExport()
                     //left child
                     if (DAG[*iter].left == -1)
                     {
-                        cout << "Warning: left child missing at node " << *iter << endl;
+                        //cout << "Warning: left child missing at node " << *iter << endl;
                         tmpcode.lvar = DAG[*iter].name;
                     }
                     else if (nodenames[DAG[*iter].left].size() == 0)
@@ -502,7 +504,7 @@ vector<QCODE> DAGExport()
                     //right child
                     if (DAG[*iter].right == -1)
                     {
-                        cout << "Warning: right child missing at node " << *iter << endl;
+                        //cout << "Warning: right child missing at node " << *iter << endl;
                         tmpcode.rvar = " ";
                     }
                     else if (nodenames[DAG[*iter].right].size() == 0)
@@ -604,7 +606,7 @@ void updateCount(string name)
             return ;
         }
     
-    //refcounter.push_back(make_pair(name, 1));
+    if (isTempVal(name)) refcounter.push_back(make_pair(name, 1));
 }
 
 bool isIden(string ttoken)
