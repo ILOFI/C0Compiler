@@ -415,13 +415,13 @@ vector<QCODE> DAGExport()
         } while (choose != -1 && DAGSatisfy(choose));
     }
 
-/*
+
     cout << "Node Compute path: ";
     for (vector<int>::reverse_iterator iter = queue.rbegin(); iter != queue.rend(); iter++)
         cout << *iter << " ";
 
     cout << endl;
-*/
+
 
     vector<set<string> > nodenames;             //每个结点对应的变量
     vector<string> tmpval;                      //每个结点对应的中间变量（0个或1个）
@@ -532,6 +532,40 @@ vector<QCODE> DAGExport()
     return ret;
 }
 
+vector<QCODE> delPublic(vector<QCODE> optcodes)
+{
+    vector<QCODE> ret;
+    ret.clear();
+
+    for (int i = 0; i < optcodes.size(); i++)
+    {
+        if (optcodes[i].opr == SPACEOP) continue;
+        for (int j = i+1; j < optcodes.size(); ++j)
+            if (optcodes[i].opr == optcodes[j].opr && optcodes[i].lvar == optcodes[j].lvar &&
+                optcodes[i].rvar == optcodes[j].rvar && isTempVal(optcodes[i].ret) && isTempVal(optcodes[j].ret))
+            {
+                for (int k = j+1; k < optcodes.size(); ++k)
+                {
+                    if (optcodes[k].lvar == optcodes[j].ret) optcodes[k].lvar = optcodes[i].ret;
+                    if (optcodes[k].rvar == optcodes[j].ret) optcodes[k].rvar = optcodes[i].ret;
+                    if (optcodes[k].ret == optcodes[j].ret) optcodes[k].ret = optcodes[i].ret;
+                }
+                
+                copyBroadcast(iend, optcodes[j].ret, optcodes[i].ret);
+                optcodes[j].opr = SPACEOP;
+                optcodes[j].lvar = " ";
+                optcodes[j].rvar = " ";
+                optcodes[j].ret = " ";
+            }
+    }
+
+    for (int i = 0; i < optcodes.size(); i++)
+        if (optcodes[i].opr != SPACEOP)
+            ret.push_back(optcodes[i]);
+
+    return ret;
+}
+
 void DAGOptimize(string filename)
 {
     midcodeopt.clear();
@@ -559,12 +593,12 @@ void DAGOptimize(string filename)
             if (now >= 4)
             {
                 iend = i;
-                //printCode(optcodes, "code to opt");
-                buildDAG(optcodes);
-                DAGPrintf();
-
-                vector<QCODE> after = DAGExport();
-                //printCode(after, "code after opt");
+                printCode(optcodes, "code to opt");
+                //buildDAG(optcodes);
+                //DAGPrintf();
+                //vector<QCODE> after = DAGExport();
+                vector<QCODE> after = delPublic(optcodes);
+                printCode(after, "code after opt");
                 for (int j = 0; j < after.size(); ++j)
                     midcodeopt.push_back(after[j]);
             }
