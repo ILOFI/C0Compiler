@@ -664,6 +664,66 @@ bool isIden(string ttoken)
     return true;
 }
 
+bool isInverseOp(oprSet a, oprSet b)
+{
+    if (a == ADDOP && b == SUBOP) return true;
+    if (a == SUBOP && b == ADDOP) return true;
+    if (a == MULOP && b == DIVOP) return true;
+    //if (a == DIVOP && b == MULOP) return true;
+    return false;
+}
+
+bool unAppear(int i, string name)
+{
+    while (i < codeCnt && midcode[i].opr != ENDOP)
+    {
+        if (midcode[i].lvar == name) return false;
+        if (midcode[i].rvar == name) return false;
+        if (midcode[i].ret == name) return false;
+        i = i + 1;
+    }
+    return true;
+}
+
+void calcCombine()
+{
+    //互为逆运算的合并
+    int i = 0;
+    while (i+1 < codeCnt)
+    {
+        if (isInverseOp(midcode[i].opr, midcode[i+1].opr) && isTempVal(midcode[i+1].ret) &&
+            midcode[i].rvar == midcode[i+1].rvar && isTempVal(midcode[i].ret) &&
+            midcode[i].ret == midcode[i+1].lvar && unAppear(i+2, midcode[i].ret))
+        {
+            copyBroadcast(i+2, midcode[i+1].ret, midcode[i].lvar);
+            midcode[i].opr = SPACEOP; midcode[i].lvar = " ";
+            midcode[i].rvar = " "; midcode[i].ret = " ";
+            midcode[i+1].opr = SPACEOP; midcode[i+1].lvar = " ";
+            midcode[i+1].rvar = " "; midcode[i+1].ret = " ";
+        }
+        i = i + 1;
+    }
+}
+
+void assignCombine()
+{
+    //单步赋值式合并
+    int i = 0;
+    while (i+1 < codeCnt)
+    {
+        if (isCalcOp(midcode[i].opr) && midcode[i+1].opr == ASSOP &&
+            isTempVal(midcode[i].ret) && midcode[i+1].lvar == midcode[i].ret && unAppear(i+2, midcode[i].ret))
+        {
+            midcode[i].ret = midcode[i+1].ret;
+            midcode[i+1].opr = SPACEOP;
+            midcode[i+1].lvar = " ";
+            midcode[i+1].rvar = " ";
+            midcode[i+1].ret = " ";
+        }
+        i = i + 1;
+    }
+}
+
 void refCount()
 {
     //全局变量暂不操作

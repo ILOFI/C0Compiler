@@ -60,6 +60,8 @@ int _tmain(int argc, _TCHAR* argv[])
 	optimize();
 	//basicBlockPrintf(midpath + ".partition");
 	DAGOptimize(midpath + ".dag");
+	calcCombine();
+	assignCombine();
 	refCount();
 	dumpQuaternionAfter();
 	genMipsCode();

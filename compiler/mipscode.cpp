@@ -225,7 +225,7 @@ void calc_code()
     if (isTempVal(midcode[codepnt].ret))    //结果为四元式的临时变量
     {
         addr = -1 * addLocalVar(midcode[codepnt].ret);
-        mipsfile << "\tsw\t$t0\t" << addr << "($fp)" << endl;
+        mipsfile << "\tsw\t" << w << "\t" << addr << "($fp)" << endl;
     }
     else if (!isReg(midcode[codepnt].ret))
     {
@@ -233,10 +233,10 @@ void calc_code()
         if (addr == 1)     //全局变量
         {
             mipsfile << "\tla\t$t1\t" << midcode[codepnt].ret << endl;
-            mipsfile << "\tsw\t$t0\t($t1)" << endl;
+            mipsfile << "\tsw\t" << w << "\t($t1)" << endl;
         }
         else
-            mipsfile << "\tsw\t$t0\t" << addr << "($fp)" << endl;
+            mipsfile << "\tsw\t" << w << "\t" << addr << "($fp)" << endl;
     }
 }
 

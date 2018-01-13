@@ -5,6 +5,8 @@
 
 #define isExprOp(x) ((x) == ADDOP || (x) == SUBOP || (x) == MULOP || (x) == DIVOP || (x) == ASSOP || (x) == AASSOP)
 
+#define isCalcOp(x) ((x) == ADDOP || (x) == SUBOP || (x) == MULOP || (x) == DIVOP)
+
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
 using namespace std;
@@ -73,6 +75,10 @@ bool DAGSatisfy(int choose);
 vector<QCODE> DAGExport();
 
 void DAGOptimize(string filename = " ");
+
+void calcCombine();
+
+void assignCombine();
 
 void refCount();    //引用计数
 
