@@ -86,13 +86,26 @@ int insertTable(string name, symkind kind, symtype type, int value, int address,
     else
     {   
         //其他类型的符号(变量，常量，参数)只需从当前层的起始位置开始找
-        for (int i = symbolTable.subpnt[symbolTable.totSub]+1; i < symbolTable.curpnt; i++)
-            if (symbolTable.item[i].name == nname)
-            {
-                errmain(DUPLICATED_DEFINE_IDENTITY, lineNum, name);
-				//cout << "Mutiple defined item " << name << endl;
-                return -1;
-            }
+        if (symbolTable.totSub == 0)
+        {
+            for (int i = symbolTable.subpnt[symbolTable.totSub]; i < symbolTable.curpnt; i++)
+                if (symbolTable.item[i].name == nname)
+                {
+                    errmain(DUPLICATED_DEFINE_IDENTITY, lineNum, name);
+                    //cout << "Mutiple defined item " << name << endl;
+                    return -1;
+                }
+        }
+        else
+        {
+            for (int i = symbolTable.subpnt[symbolTable.totSub]+1; i < symbolTable.curpnt; i++)
+                if (symbolTable.item[i].name == nname)
+                {
+                    errmain(DUPLICATED_DEFINE_IDENTITY, lineNum, name);
+                    //cout << "Mutiple defined item " << name << endl;
+                    return -1;
+                }
+        }
     }
 
     symbolTable.item[symbolTable.curpnt].name = nname;

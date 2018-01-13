@@ -569,7 +569,7 @@ vector<QCODE> delPublic(vector<QCODE> optcodes)
 void DAGOptimize(string filename)
 {
     midcodeopt.clear();
-    outfile.open(filename, ios::out);
+    //outfile.open(filename, ios::out);
 
     //遍历每条中间代码，找到待优化的中间代码，生成DAG图，
     //之后从DAG图中导出对应代码，插入至原来的位置
@@ -593,12 +593,12 @@ void DAGOptimize(string filename)
             if (now >= 4)
             {
                 iend = i;
-                printCode(optcodes, "code to opt");
+                //printCode(optcodes, "code to opt");
                 //buildDAG(optcodes);
                 //DAGPrintf();
                 //vector<QCODE> after = DAGExport();
                 vector<QCODE> after = delPublic(optcodes);
-                printCode(after, "code after opt");
+                //printCode(after, "code after opt");
                 for (int j = 0; j < after.size(); ++j)
                     midcodeopt.push_back(after[j]);
             }
@@ -623,7 +623,7 @@ void DAGOptimize(string filename)
         midcode[i].ret = midcodeopt[i].ret;
     }
 
-    outfile.close();
+    //outfile.close();
 }
 
 int mycmp(pair<string, int> &p1, pair<string, int> &p2)

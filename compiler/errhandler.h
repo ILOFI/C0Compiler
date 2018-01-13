@@ -33,6 +33,7 @@ enum errType {
     LACK_OF_ASSIGN_MARK,            //缺少赋值符号
     LACK_OF_ELSE_STATEMENT,         //缺少else语句段
     LACK_OF_MAIN_FUNCTION,          //缺少main函数或main函数不在末尾
+    ARRAY_INDEX_EXCEED,             //数组下标访问越界
 };
 
 const string errMsg[] = {
@@ -64,6 +65,7 @@ const string errMsg[] = {
     "LACK_OF_ASSIGN_MARK",            //缺少赋值符号
     "LACK_OF_ELSE_STATEMENT",         //缺少else语句段
     "LACK_OF_MAIN_FUNCTION",          //缺少main函数或main函数不在末尾
+    "ARRAY_INDEX_EXCEED",             //数组下标访问越界
 };
 
 void errmain();

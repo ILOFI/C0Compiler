@@ -92,10 +92,17 @@ void dumpQuaternionBefore()
     {
         if (midcode[i].opr == SPACEOP) continue;
         if (midcode[i].opr == FUNCOP) midcodebefore << endl;
+        
         midcodebefore << oprstr[(int)midcode[i].opr] << ", " 
                       << midcode[i].lvar << ", "
                       << midcode[i].rvar << ", "
                       << midcode[i].ret << endl;
+        /*
+        midcodebefore << midcode[i].ret << " = "
+                      << midcode[i].lvar << " "
+                      << oprstr[(int)midcode[i].opr] << " "
+                      << midcode[i].rvar << endl;
+        */
     }
 }
 
@@ -105,9 +112,16 @@ void dumpQuaternionAfter()
     {
         if (midcode[i].opr == SPACEOP) continue;
         if (midcode[i].opr == FUNCOP) midcodeafter << endl;
+        
         midcodeafter << oprstr[(int)midcode[i].opr] << ", " 
                       << midcode[i].lvar << ", "
                       << midcode[i].rvar << ", "
                       << midcode[i].ret << endl;
+        /*
+        midcodeafter << midcode[i].ret << " = "
+                      << midcode[i].lvar << " "
+                      << oprstr[(int)midcode[i].opr] << " "
+                      << midcode[i].rvar << endl;
+        */
     }
 }

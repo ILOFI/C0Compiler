@@ -6,7 +6,7 @@ int address;
 int para;
 int place;
 symtype exprType;       //表达式的类型(int or char)
-bool inMain;
+bool inMain, isVoidFunc;
 
 void serror(string msg = "Syntax Error")
 {
@@ -44,6 +44,7 @@ void program()                                                      //程序递�
 {
     address = 0;
     inMain = false;
+    isVoidFunc = false;
     if (symbol == CONSTTK)                                          //常量标识，调用常量声明子程序
     {
         nextSym();
@@ -75,6 +76,7 @@ void program()                                                      //程序递�
             inMain = false;
             funciden = variden;
             functype = vartype;
+            isVoidFunc = false;
             funcDef();                                       //此时已预读三个，读到左括号或左大括号
         }
         else serror();
@@ -83,10 +85,11 @@ void program()                                                      //程序递�
     while (symbol == VOIDTK || symbol == INTTK || symbol == CHARTK) //若干个无返回值或有返回值函数定义
     {
         // int a(int x, int y){} int a{}
+        isVoidFunc = symbol == VOIDTK;
         functype = symbol;                                //函数类型
         nextSym();
         funciden = token;                                          //函数名
-        
+
         if (symbol == MAINTK)                                        //主函数
         {
             inMain = true;
@@ -480,11 +483,13 @@ void mainFunc()                                                     //主函数
     para = 0;
     if (symbol != LPARTK) errmain(LACK_OF_LEFT_PARENT, lineNum);
     
+    nextSym();
     while (symbol != RPARTK && symbol != LBRACETK && symbol != EOFTK)
         nextSym();
     
     if (symbol != RPARTK) errmain(LACK_OF_RIGHT_PARENT, lineNum);
     
+    nextSym();
     while (symbol != LBRACETK && symbol != EOFTK)
         nextSym();
 
@@ -791,8 +796,18 @@ void assignState()
                 nextSym();
             return;
         }
+        int tarlen = symbolTable.item[varplace].len;
         nextSym();
         var1 = expr();      //var1存放数组索引
+        
+        //检查数组索引越界问题
+        if (isInt(var1[0]))
+        {
+            int tind = atoi(var1.c_str());
+            if (tind < 0 || tind >= tarlen)
+                errmain(ARRAY_INDEX_EXCEED, lineNum, var1);
+        }
+
         if (symbol != RIPARTK)
         {
             errmain(LACK_OF_RIGHT_BRACKET, lineNum);
@@ -987,6 +1002,7 @@ void returnState()
     string var1 = oprstr[(int)SPACEOP];    //表达式的返回结果
     if (symbol == LPARTK)   //return后接表达式
     {
+        if (isVoidFunc) errmain(UNEXPETED_RETURN_VALUE, lineNum);
         nextSym();
         var1 = expr();
         if (symbol != RPARTK) serror();
@@ -1095,7 +1111,9 @@ string factor()
             if (place == -1) errmain(UNDEFINED_IDENTITY, lineNum, leftiden);
             else if (symbolTable.item[place].len == 0) serror("Not a array of variable "+leftiden);
             else if (symbolTable.item[place].kind == CONSTKD) serror("There's no constant array "+leftiden);
-            
+
+            int tarlen = symbolTable.item[place].len;
+
             if (symbolTable.item[place].type == INTTP) exprType = INTTP;
             nextSym();
             var3 = leftiden;
@@ -1103,6 +1121,15 @@ string factor()
             symtype tmp = exprType;
             var2 = expr(exprType);      //var2存放数组索引
             exprType = tmp;
+            
+            //检查数组下标是否越界
+            if (isInt(var2[0]))
+            {
+                int tind = atoi(var2.c_str());
+                if (tind < 0 || tind >= tarlen)
+                    errmain(ARRAY_INDEX_EXCEED, lineNum, var2);
+            }
+
             genQuaternion(AASSOP, var3, var2, var1);   //Array assign取数组元素 =[] var1 = var3[var2]
 
             if (symbol != RIPARTK) errmain(LACK_OF_RIGHT_BRACKET, lineNum);
