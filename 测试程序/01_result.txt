@@ -1,0 +1,445 @@
+Mars模拟器与直接运行编译后的exe文件不同，模拟器在输入字符(char)后不需要再键入回车，否则会导致下一个输入符号非法（识别为换行符）。
+测试结果与预期相符。
+测试样例1
+【输入】
+i
+4563
+k
+f
+2011
+2015
+v
+q
+【输出】
+Initial testing...
+_
+a
+b
+c
+d
+e
+f
+g
+h
+i
+j
+k
+l
+m
+n
+o
+p
+q
+r
+s
+t
+u
+v
+w
+x
+y
+z
+A
+B
+C
+D
+E
+F
+G
+H
+I
+J
+K
+L
+M
+N
+O
+P
+Q
+R
+S
+T
+U
+V
+W
+X
+Y
+Z
++
+-
+*
+/
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+...String test...
+ !#$%&'()*+,-./0123456789:;<=>?
+@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`
+abcdefghijklmnopqrstuvwxyz{|}~
+...String test Finish!...
+...Recursion test...
+..tr = 1
+..tr = 2
+..tr = 3
+._tr = 2
+._tr = 1
+...Recursion test Finish!...
+Testing Finish!......Welcome to student information manage system!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+iInsert student-------Student ID(4-len digits):
+4563
+Student name(1-len letter or digit):
+kStudent gender(char, f for female, m for male):
+fStudent Entry Year(4-len digits):
+2011
+Student Graduate Year(4-len digits):
+2015
+Successfully inserted!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+vStudent_1
+  ID: 4563
+, Name: k
+, Gender: f
+, Entry Year: 2011
+, Graduate Year: 2015
+, During Years: 
+4
+, During Days: 1460
+. Student End.        
+Please choose your operation(i: insert;    v: view;    q:quit):
+qSee you!
+测试样例2
+【输入】
+i
+5865
+o
+f
+30000
+v
+q
+【输出】
+Initial testing...
+_
+a
+b
+c
+d
+e
+f
+g
+h
+i
+j
+k
+l
+m
+n
+o
+p
+q
+r
+s
+t
+u
+v
+w
+x
+y
+z
+A
+B
+C
+D
+E
+F
+G
+H
+I
+J
+K
+L
+M
+N
+O
+P
+Q
+R
+S
+T
+U
+V
+W
+X
+Y
+Z
++
+-
+*
+/
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+...String test...
+ !#$%&'()*+,-./0123456789:;<=>?
+@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`
+abcdefghijklmnopqrstuvwxyz{|}~
+...String test Finish!...
+...Recursion test...
+..tr = 1
+..tr = 2
+..tr = 3
+._tr = 2
+._tr = 1
+...Recursion test Finish!...
+Testing Finish!......Welcome to student information manage system!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+iInsert student-------Student ID(4-len digits):
+5865
+Student name(1-len letter or digit):
+oStudent gender(char, f for female, m for male):
+fStudent Entry Year(4-len digits):
+30000
+Invalid operation!    
+Failed to insert!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+vStudent list is empty!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+qSee you!
+
+测试样例3
+【输入】
+i
+1230
+q
+m
+1996
+2001
+i
+4567
+A
+f
+2016
+2020
+i
+8900
+P
+f
+2015
+2019
+i
+7800
+g
+f
+2015
+2022
+i
+5230
+U
+f
+1997
+2001
+i
+v
+q
+【输出】
+Initial testing...
+_
+a
+b
+c
+d
+e
+f
+g
+h
+i
+j
+k
+l
+m
+n
+o
+p
+q
+r
+s
+t
+u
+v
+w
+x
+y
+z
+A
+B
+C
+D
+E
+F
+G
+H
+I
+J
+K
+L
+M
+N
+O
+P
+Q
+R
+S
+T
+U
+V
+W
+X
+Y
+Z
++
+-
+*
+/
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
+...String test...
+ !#$%&'()*+,-./0123456789:;<=>?
+@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]^_`
+abcdefghijklmnopqrstuvwxyz{|}~
+...String test Finish!...
+...Recursion test...
+..tr = 1
+..tr = 2
+..tr = 3
+._tr = 2
+._tr = 1
+...Recursion test Finish!...
+Testing Finish!......Welcome to student information manage system!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+iInsert student-------Student ID(4-len digits):
+1230
+Student name(1-len letter or digit):
+qStudent gender(char, f for female, m for male):
+mStudent Entry Year(4-len digits):
+1996
+Student Graduate Year(4-len digits):
+2001
+Successfully inserted!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+iInsert student-------Student ID(4-len digits):
+4567
+Student name(1-len letter or digit):
+AStudent gender(char, f for female, m for male):
+fStudent Entry Year(4-len digits):
+2016
+Student Graduate Year(4-len digits):
+2020
+Successfully inserted!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+iInsert student-------Student ID(4-len digits):
+8900
+Student name(1-len letter or digit):
+PStudent gender(char, f for female, m for male):
+fStudent Entry Year(4-len digits):
+2015
+Student Graduate Year(4-len digits):
+2019
+Successfully inserted!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+iInsert student-------Student ID(4-len digits):
+7800
+Student name(1-len letter or digit):
+gStudent gender(char, f for female, m for male):
+fStudent Entry Year(4-len digits):
+2015
+Student Graduate Year(4-len digits):
+2022
+Successfully inserted!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+iInsert student-------Student ID(4-len digits):
+5230
+Student name(1-len letter or digit):
+UStudent gender(char, f for female, m for male):
+fStudent Entry Year(4-len digits):
+1997
+Student Graduate Year(4-len digits):
+2001
+Successfully inserted!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+iMAX Item exceed!    
+Failed to insert!    
+Please choose your operation(i: insert;    v: view;    q:quit):
+vStudent_1
+  ID: 1230
+, Name: q
+, Gender: m
+, Entry Year: 1996
+, Graduate Year: 2001
+, During Years: 
+5
+, During Days: 1825
+. Student End.        
+Student_2
+  ID: 4567
+, Name: A
+, Gender: f
+, Entry Year: 2016
+, Graduate Year: 2020
+, During Years: 
+4
+, During Days: 1460
+. Student End.        
+Student_3
+  ID: 8900
+, Name: P
+, Gender: f
+, Entry Year: 2015
+, Graduate Year: 2019
+, During Years: 
+4
+, During Days: 1460
+. Student End.        
+Student_4
+  ID: 7800
+, Name: g
+, Gender: f
+, Entry Year: 2015
+, Graduate Year: 2022
+, During Years: 
+7
+, During Days: 2555
+. Student End.        
+Student_5
+  ID: 5230
+, Name: U
+, Gender: f
+, Entry Year: 1997
+, Graduate Year: 2001
+, During Years: 
+4
+, During Days: 1460
+. Student End.        
+Please choose your operation(i: insert;    v: view;    q:quit):
+qSee you!

@@ -1,0 +1,4 @@
+Error on line 5: MAIN_TYPE_ERROR
+Error on line 11: LACK_OF_CASE_STATEMENT
+Error on line 12: LACK_OF_COLON
+Error on line 14: CONST_ASSIGNMENT two

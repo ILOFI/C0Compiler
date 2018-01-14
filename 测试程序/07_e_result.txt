@@ -1,0 +1,7 @@
+Error on line 1: INVALID_CONST_VALUE 500
+Error on line 2: INVALID_ARRAY_LENGTH -
+Error on line 4: INVALID_TYPE charr
+Error on line 4: INVALID_TYPE inta
+Error on line 7: UNEXPETED_RETURN_VALUE_FUNCTION
+Error on line 8: LACK_OF_SEMICOLON
+Error on line 12: LACK_OF_RIGHT_BRACKET

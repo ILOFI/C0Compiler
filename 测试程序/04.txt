@@ -1,0 +1,21 @@
+int a, b;
+
+int fact(int u)
+{
+	if (u == 0) return (1);
+	else return (u * fact(u - 1));
+}
+
+int abs(int x)
+{
+	if (x > 0) return (x);
+	else return (-x);
+}
+
+void main()
+{
+	const int one = 1;
+	scanf(a, b);
+	printf(abs(a-b) * fact(1) + 'a' - 'b' + 2 / 2 * 3 / 3 * one);
+	printf(fact(a)+fact(b));	
+}

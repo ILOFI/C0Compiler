@@ -1,0 +1,15 @@
+char _op;
+
+void hello{}
+
+int main()
+{
+	const int two = 1;
+	scanf(_op);
+	switch (_op)
+	{
+		default 
+		{ printf("hello world!");}
+	}
+	two = 2;
+}

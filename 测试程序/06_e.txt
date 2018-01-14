@@ -1,0 +1,25 @@
+const int ARRSIZE = 10, hehe;
+const char f = '!', q = 't;
+int a[010], arrsize;
+
+void main()
+{
+    int i, t, 9kkk;
+    printf("Hello world);
+    i = 0;
+    while (i < 10)
+    {
+        scanf(t);
+        a[i] = t;
+        i = i + 1;
+	fa = q;
+    }
+
+    i = 0;
+    while (i < 10)
+    {
+        printf(a[i]);
+        i = i + 1;
+    }
+    return;
+}

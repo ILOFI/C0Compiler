@@ -1,0 +1,228 @@
+const int MAXITEM = 5, MAXLEN = 10;
+int stuID[10];
+char stuName[10], stuGen[10];
+int stuEnt[10];
+int stuGrat[10], stuDur[10], stuDays[10];
+int curpnt;
+int tr;
+
+void invalidOperation
+{
+    printf("Invalid operation!    ");
+    return;
+}
+
+void error(int no)
+{
+    switch (no)
+    {
+        case 1: 
+        {
+            printf("Name can't be underline!    ");
+        }
+        case 2:
+        {
+            printf("Invalid gender char!     ");
+        }
+        default: invalidOperation;
+    }
+    return;
+}
+
+int getDuringYears(int year1, int year2)
+{
+    const int zero = 0;
+    int yr;
+    yr = year2 - year1;
+    if (yr < ZERO) invalidOperation;
+    else ;
+    return(yr);
+}
+
+int insert
+{
+    const char male = 'm', female = 'f';
+    int tmpint;
+    char tmpch;
+    curpnt = curpnt + 1;
+    if (curpnt >= MAXITEM)
+    {
+        printf("MAX Item exceed!    ");
+        curpnt = curpnt - 1;
+        return(-1);
+    }
+    else
+    ;
+    printf("Insert student-------Student ID(4-len digits):");
+    scanf(tmpint);
+    stuID[curpnt] = tmpint;
+    printf("Student name(1-len letter or digit):");
+    scanf(tmpch);
+
+    if (tmpch == '_')
+    {
+        curpnt = curpnt - 1;
+        error(+1);
+        return(-1);
+    }
+    else ;
+
+    stuName[curpnt] = tmpch;
+    printf("Student gender(char, f for female, m for male):");
+    scanf(tmpch);
+
+    if (tmpch != mAlE)
+    {
+        if (tmpch != FeMaLe)
+        {
+            curpnt = curpnt - 1;
+            error(2);
+            return(-1);
+        }
+        else ;
+    }
+    else ;
+
+    stuGen[curpnt] = tmpch;
+    printf("Student Entry Year(4-len digits):");
+    scanf(tmpint);
+
+    if (tmpint > 3000)
+    {
+        curpnt = curpnt - 1;
+        invalidOperation;
+        return(-1);
+    }
+    else ;
+
+    stuEnt[curpnt] = tmpint;
+    printf("Student Graduate Year(4-len digits):");
+    scanf(tmpint);
+    stuGrat[curpnt] = tmpint;
+
+    stuDur[curpnt] = getDuringYears(stuEnt[curpnt], stuGrat[curpnt]);
+    stuDays[curpnt] = stuDur[curpnt] *(365 / 1);
+    return(0);
+}
+
+int view
+{
+    int i;
+    if (curpnt < 0) printf("Student list is empty!    ");
+    else
+    {
+        i = 0;
+        while (i <= curpnt)
+        {
+            printf("Student_", i+1);
+            printf("  ID: ", stuID[i]);
+            printf(", Name: ", stuName[i]);
+            printf(", Gender: ", stuGen[i]);
+            printf(", Entry Year: ", stuEnt[i]);
+            printf(", Graduate Year: ", stuGrat[i]);
+            printf(", During Years: ");
+            printf(stuDur[i]);
+            printf(", During Days: ", stuDays[i]);
+            printf(". Student End.        ");
+            i = + i + 1;
+        }
+    }
+    return(0);
+}
+
+char getnextch(char ch)
+{
+    char ret;
+    ret = ch + 1;
+    return(ret);
+}
+
+void recursionTest
+{
+    tr = tr + 1;
+    printf("..tr = ", tr);
+    if (tr >= 3)
+        return;
+    else ;
+    recursionTest;
+    tr = tr - 1;
+    printf("._tr = ", tr);
+}
+
+void initialTest
+{
+    char ch;
+    ch = '_';
+    printf(ch);
+    ch = 'a';
+    while (ch <= 'z')
+    {
+        printf(ch);
+        ch = getnextch(ch);
+    }
+    ch = 'A';
+    while (ch <= 'Z')
+    {
+        printf(ch);
+        ch = getnextch(ch);
+    }
+    ch = '+';
+    printf(ch);
+    ch = '-';
+    printf(ch);
+    ch = '*';
+    printf(ch);
+    ch = '/';
+    printf(ch);
+    ch = '0';
+    while (ch <= '9')
+    {
+        printf(ch);
+        ch = getnextch(ch);
+    }
+    printf("...String test...");
+    printf(" !#$%&'()*+,-./0123456789:;<=>?");
+    printf("@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\]^_`");
+    printf("abcdefghijklmnopqrstuvwxyz{|}~");
+    printf("...String test Finish!...");
+    printf("...Recursion test...");
+    tr = 0;
+    recursionTest;
+    printf("...Recursion test Finish!...");
+}
+
+void main()
+{
+    char ch;
+    int flag, ret, i;
+    curpnt = -1;
+    printf("Initial testing...");
+    initialTest;
+    printf("Testing Finish!......Welcome to student information manage system!    ");
+    flag = 1;
+    while (flag)
+    {
+        printf("Please choose your operation(i: insert;    v: view;    q:quit):");
+        scanf(ch);
+        switch (ch)
+        {
+            case 'i':
+            {
+                ret = insert;
+                if (ret == 0) printf("Successfully inserted!    ");
+                else printf("Failed to insert!    ");
+            }
+            case 'v':
+            {
+                view;
+            }
+            case 'q':
+            {
+                flag = 0;
+            }
+            default: invalidOperation;
+        }
+    }
+    printf("See you!");
+    return;
+}

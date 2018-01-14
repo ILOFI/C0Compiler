@@ -1,0 +1,11 @@
+Error on line 1: CONST_NOT_ASSIGNED hehe
+Error on line 2: INVALID_CHAR_TYPE !
+Error on line 2: LACK_OF_QUOTE
+Error on line 2: INVALID_CONST_VALUE t
+Error on line 3: UNSIGNED_DIGIT_START_WITH_0
+Error on line 3: DUPLICATED_DEFINE_IDENTITY arrsize
+Error on line 7: INVALID_IDENTITY
+Error on line 8: LACK_OF_DOUBLE_QUOTE Hello world);
+Error on line 8: LACK_OF_RIGHT_PARENT
+Error on line 8: LACK_OF_SEMICOLON
+Error on line 14: UNDEFINED_IDENTITY fa

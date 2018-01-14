@@ -1,0 +1,24 @@
+void main()
+{
+	int a, b, c, d;
+	a = 3;
+	b = 1; c = -2;
+	d = 5;
+	printf("a=",a);
+	printf("b=",b);
+	printf("c=",c);
+	printf("d=", d);
+	d = a; a = b; b = c + c * 2; c = d;
+	printf("a= ",a);
+	printf("b= ",b);
+	printf("c= ",c);
+	printf("d= ",d);
+	d = -c;
+	a = b * (-c) + b*( -c );
+	printf(a);
+	if (b*c-a*(-c)+d*(-c)+b*c < a)
+		printf("Hello world");
+	else
+		printf("Hello world2");
+	return;
+}

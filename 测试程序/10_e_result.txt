@@ -1,0 +1,5 @@
+Error on line 10: LACK_OF_ASSIGN_MARK
+Error on line 13: LACK_OF_ELSE_STATEMENT
+Error on line 13: PARAMETER_COUNT_MISMATCH max
+Error on line 14: ARRAY_INDEX_EXCEED 700
+Error on line 15: LACK_OF_MAIN_FUNCTION

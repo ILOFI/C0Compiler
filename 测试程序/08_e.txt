@@ -1,0 +1,12 @@
+void test
+
+	printf("hello");
+}
+
+void main[)
+{
+	int a, b;
+	a = 3; b = 4;
+	if (a > b
+		printf(a);
+	else ;

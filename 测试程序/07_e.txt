@@ -1,0 +1,13 @@
+const char f = 500;
+int a[-10];
+
+void printa(charr b, inta c)
+{
+	printf("a");
+	return (1)
+}
+
+void main()
+{
+	int s[3;
+}
